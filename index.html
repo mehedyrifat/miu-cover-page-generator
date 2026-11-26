@@ -612,7 +612,6 @@
         <form id="detailsForm" autocomplete="on">
           <div class="form-grid">
 
-            <!-- Assignment / Lab Report Department -->
             <div class="field full">
               <label for="dept">Department</label>
               <select id="dept">
@@ -628,7 +627,7 @@
             </div>
 
             <div class="field">
-              <label for="docNo">Document No.</label>
+              <label for="docNo" id="docNoLabel">Assignment No.</label>
               <input id="docNo" placeholder="01" value="01">
             </div>
 
@@ -653,8 +652,8 @@
             </div>
 
             <div class="field full">
-              <label for="reportName">Report / Assignment Name</label>
-              <textarea id="reportName" placeholder="Write your topic or experiment name"></textarea>
+              <label for="reportName" id="nameFieldLabel">Assignment Name</label>
+              <textarea id="reportName" placeholder="Write your assignment name"></textarea>
             </div>
 
             <div class="field">
@@ -672,7 +671,6 @@
               <input id="teacherName" placeholder="Teacher name">
             </div>
 
-            <!-- Teacher Qualification Dropdown -->
             <div class="field">
               <label for="teacherDesig">Teacher Designation</label>
               <select id="teacherDesig">
@@ -684,7 +682,6 @@
               </select>
             </div>
 
-            <!-- Teacher Department Dropdown -->
             <div class="field full">
               <label for="teacherDept">Teacher Department</label>
               <select id="teacherDept">
@@ -739,7 +736,6 @@
                 <div class="uni-name">MANARAT INTERNATIONAL<br>UNIVERSITY</div>
               </div>
 
-              <!-- Department name is displayed once -->
               <div class="dept-name">
                 <span id="p-dept">DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING</span>
               </div>
@@ -752,7 +748,8 @@
               </div>
 
               <div class="report-name">
-                Report Name: <span id="p-report-name"></span>
+                <span id="p-name-label">Assignment Name:</span>
+                <span id="p-report-name"></span>
               </div>
 
               <div class="lab-date hidden" id="p-lab-date">
@@ -827,17 +824,37 @@
     function setType(type) {
       currentType = type;
 
-      $('btn-assign').classList.toggle('active', type === 'assignment');
-      $('btn-lab').classList.toggle('active', type === 'lab');
+      const isAssignment = type === 'assignment';
 
-      $('layout-assign-top').classList.toggle('hidden', type !== 'assignment');
-      $('layout-lab-top').classList.toggle('hidden', type !== 'lab');
+      $('btn-assign').classList.toggle('active', isAssignment);
+      $('btn-lab').classList.toggle('active', !isAssignment);
 
-      $('p-lab-date').classList.toggle('hidden', type !== 'lab');
-      $('p-bottom-date').classList.toggle('hidden', type !== 'assignment');
+      $('layout-assign-top').classList.toggle('hidden', !isAssignment);
+      $('layout-lab-top').classList.toggle('hidden', isAssignment);
 
-      $('border-layer').classList.toggle('lab', type === 'lab');
-      $('pdf-content').classList.toggle('lab-layout', type === 'lab');
+      $('p-lab-date').classList.toggle('hidden', isAssignment);
+      $('p-bottom-date').classList.toggle('hidden', !isAssignment);
+
+      $('border-layer').classList.toggle('lab', !isAssignment);
+      $('pdf-content').classList.toggle('lab-layout', !isAssignment);
+
+      // Dynamically change form labels
+      $('docNoLabel').textContent = isAssignment
+        ? 'Assignment No.'
+        : 'Report No.';
+
+      $('nameFieldLabel').textContent = isAssignment
+        ? 'Assignment Name'
+        : 'Report Name';
+
+      $('reportName').placeholder = isAssignment
+        ? 'Write your assignment name'
+        : 'Write your report name';
+
+      // Dynamically change the cover page label
+      $('p-name-label').textContent = isAssignment
+        ? 'Assignment Name: '
+        : 'Report Name: ';
 
       updatePreview();
     }
