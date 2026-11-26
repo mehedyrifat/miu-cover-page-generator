@@ -611,17 +611,19 @@
 
         <form id="detailsForm" autocomplete="on">
           <div class="form-grid">
+
+            <!-- Assignment / Lab Report Department -->
             <div class="field full">
               <label for="dept">Department</label>
               <select id="dept">
-                <option>COMPUTER SCIENCE & ENGINEERING</option>
-                <option>ELECTRICAL & ELECTRONIC ENGINEERING</option>
-                <option>BUSINESS ADMINISTRATION</option>
-                <option>ENGLISH</option>
-                <option>LAW</option>
-                <option>PHARMACY</option>
-                <option>CIVIL ENGINEERING</option>
-                <option>ARCHITECTURE</option>
+                <option value="Department of Computer Science and Engineering">Department of Computer Science and Engineering</option>
+                <option value="Department of Electronics and Electrical Engineering">Department of Electronics and Electrical Engineering</option>
+                <option value="Department of Pharmacy">Department of Pharmacy</option>
+                <option value="Department of English">Department of English</option>
+                <option value="Department of Journalism and Media Studies">Department of Journalism and Media Studies</option>
+                <option value="Department of Business Administration">Department of Business Administration</option>
+                <option value="Department of Law">Department of Law</option>
+                <option value="Department of Islamic Studies">Department of Islamic Studies</option>
               </select>
             </div>
 
@@ -670,15 +672,35 @@
               <input id="teacherName" placeholder="Teacher name">
             </div>
 
+            <!-- Teacher Qualification Dropdown -->
             <div class="field">
               <label for="teacherDesig">Teacher Designation</label>
-              <input id="teacherDesig" placeholder="e.g. Lecturer">
+              <select id="teacherDesig">
+                <option value="" disabled selected>Select Qualification</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="Assistant Professor">Assistant Professor</option>
+                <option value="Associate Professor">Associate Professor</option>
+                <option value="Professor">Professor</option>
+              </select>
             </div>
 
+            <!-- Teacher Department Dropdown -->
             <div class="field full">
               <label for="teacherDept">Teacher Department</label>
-              <input id="teacherDept" placeholder="e.g. Department of CSE, MIU">
+              <select id="teacherDept">
+                <option value="" disabled selected>Select Department</option>
+                <option value="Department of CSE">Department of CSE</option>
+                <option value="Department of EEE">Department of EEE</option>
+                <option value="Department of Pharmacy">Department of Pharmacy</option>
+                <option value="Department of English">Department of English</option>
+                <option value="Department of BJM">Department of BJM</option>
+                <option value="Department of BBA">Department of BBA</option>
+                <option value="Department of Law">Department of Law</option>
+                <option value="Department of Islamic Studies">Department of Islamic Studies</option>
+                <option value="Department of CGED">Department of CGED</option>
+              </select>
             </div>
+
           </div>
 
           <div class="form-actions">
@@ -717,8 +739,9 @@
                 <div class="uni-name">MANARAT INTERNATIONAL<br>UNIVERSITY</div>
               </div>
 
+              <!-- Department name is displayed once -->
               <div class="dept-name">
-                DEPARTMENT OF <span id="p-dept">COMPUTER SCIENCE & ENGINEERING</span>
+                <span id="p-dept">DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING</span>
               </div>
 
               <div class="doc-type" id="p-doc-type">ASSIGNMENT-01</div>
@@ -824,7 +847,8 @@
         fields.map(id => [id, $(id).value.trim()])
       );
 
-      $('p-dept').innerHTML = v.dept.replace(' & ', ' &amp;<br>');
+      // Show the complete department name without duplication
+      $('p-dept').textContent = v.dept || 'Department of Computer Science and Engineering';
 
       $('p-doc-type').textContent =
         (currentType === 'assignment' ? 'ASSIGNMENT-' : 'LAB REPORT-') +
@@ -862,7 +886,19 @@
         if (saved && saved.values) {
           fields.forEach(id => {
             if (saved.values[id] !== undefined) {
-              $(id).value = saved.values[id];
+              const value = saved.values[id];
+
+              // Restore only values that exist in the updated dropdowns
+              if ($(id).tagName === 'SELECT') {
+                const optionExists = Array.from($(id).options)
+                  .some(option => option.value === value);
+
+                if (optionExists) {
+                  $(id).value = value;
+                }
+              } else {
+                $(id).value = value;
+              }
             }
           });
 
