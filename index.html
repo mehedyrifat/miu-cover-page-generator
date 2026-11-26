@@ -11,13 +11,18 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="MIU Cover">
   <title>MIU Cover Page Generator</title>
+
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icon-192.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- PDF Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root {
@@ -1087,9 +1092,54 @@
       updatePreview();
     }
 
-    // PDF DOWNLOAD - PRESERVE IMAGE ASPECT RATIOS
+    // Wait for image loading
+    async function waitForImages(element) {
+      const images = Array.from(element.querySelectorAll('img'));
+
+      await Promise.all(
+        images.map(async (img) => {
+          if (!img.complete) {
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          }
+
+          if (img.decode) {
+            await img.decode().catch(() => {});
+          }
+
+          if (!img.naturalWidth || !img.naturalHeight) {
+            throw new Error('Image failed to load: ' + img.src);
+          }
+        })
+      );
+
+      return images;
+    }
+
+    // Calculate image dimensions without distortion
+    function fitImage(naturalWidth, naturalHeight, maxWidth, maxHeight) {
+      const ratio = naturalWidth / naturalHeight;
+
+      let width = maxWidth;
+      let height = width / ratio;
+
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = height * ratio;
+      }
+
+      return { width, height };
+    }
+
+    // PDF DOWNLOAD - SINGLE A4 PAGE
     async function downloadPDF() {
-      if (typeof html2pdf === 'undefined') {
+      if (
+        typeof html2canvas === 'undefined' ||
+        !window.jspdf ||
+        !window.jspdf.jsPDF
+      ) {
         toast('PDF library is unavailable. Connect to the internet and reload.');
         return;
       }
@@ -1108,129 +1158,182 @@
       downloadBtn.disabled = true;
       downloadBtn.textContent = 'Preparing PDF...';
 
+      let clone = null;
+      let wrapper = null;
+
       try {
-        // Wait for all original images to load
-        const images = Array.from(element.querySelectorAll('img'));
+        // Wait for all original images
+        const originalImages = await waitForImages(element);
 
-        await Promise.all(
-          images.map(async (img) => {
-            if (!img.complete) {
-              await new Promise((resolve) => {
-                img.onload = resolve;
-                img.onerror = resolve;
-              });
-            }
+        // Create a separate PDF rendering copy
+        wrapper = document.createElement('div');
 
-            if (img.decode) {
-              await img.decode().catch(() => {});
-            }
-          })
-        );
+        wrapper.style.position = 'fixed';
+        wrapper.style.left = '0';
+        wrapper.style.top = '0';
+        wrapper.style.width = '210mm';
+        wrapper.style.height = '297mm';
+        wrapper.style.overflow = 'hidden';
+        wrapper.style.zIndex = '-9999';
+        wrapper.style.pointerEvents = 'none';
+        wrapper.style.background = '#ffffff';
 
-        // Save the original aspect ratios before html2canvas clones the page
-        const imageRatios = images.map((img) => ({
-          src: img.getAttribute('src'),
-          naturalWidth: img.naturalWidth,
-          naturalHeight: img.naturalHeight
+        clone = element.cloneNode(true);
+
+        clone.style.position = 'absolute';
+        clone.style.left = '0';
+        clone.style.top = '0';
+        clone.style.width = '210mm';
+        clone.style.height = '297mm';
+        clone.style.minWidth = '210mm';
+        clone.style.maxWidth = '210mm';
+        clone.style.minHeight = '297mm';
+        clone.style.maxHeight = '297mm';
+        clone.style.margin = '0';
+        clone.style.transform = 'none';
+        clone.style.boxShadow = 'none';
+        clone.style.overflow = 'hidden';
+        clone.style.flex = 'none';
+
+        wrapper.appendChild(clone);
+        document.body.appendChild(wrapper);
+
+        // Wait for browser layout
+        await new Promise(resolve => requestAnimationFrame(() => {
+          requestAnimationFrame(resolve);
         }));
 
-        await html2pdf().set({
-          margin: 0,
-          filename: fileName,
+        // Replace logo and watermark images with correctly sized canvases
+        const clonedImages = Array.from(clone.querySelectorAll('img'));
 
-          image: {
-            type: 'jpeg',
-            quality: 0.98
-          },
+        clonedImages.forEach((img, index) => {
+          const original = originalImages[index];
 
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-            scrollX: 0,
-            scrollY: 0,
-            logging: false,
+          if (!original) return;
 
-            onclone: (clonedDoc) => {
-              const clonedContent = clonedDoc.getElementById('pdf-content');
+          const naturalWidth = original.naturalWidth;
+          const naturalHeight = original.naturalHeight;
 
-              if (!clonedContent) return;
+          if (!naturalWidth || !naturalHeight) return;
 
-              // Restore natural image proportions in the PDF clone
-              const clonedImages = Array.from(
-                clonedContent.querySelectorAll('img')
-              );
+          let maxWidth;
+          let maxHeight;
 
-              clonedImages.forEach((img, index) => {
-                const original = imageRatios[index];
+          if (img.classList.contains('watermark')) {
+            maxWidth = currentType === 'assignment'
+              ? 184.15
+              : 156.718;
 
-                if (
-                  !original ||
-                  !original.naturalWidth ||
-                  !original.naturalHeight
-                ) {
-                  return;
-                }
+            maxHeight = currentType === 'assignment'
+              ? 146.558
+              : 125.222;
 
-                const ratio =
-                  original.naturalWidth / original.naturalHeight;
+          } else if (img.closest('.logo-area')) {
+            maxWidth = 73.914;
+            maxHeight = 61.214;
 
-                if (img.classList.contains('watermark')) {
-                  const maxWidth = currentType === 'assignment'
-                    ? 184.15
-                    : 156.718;
-
-                  const maxHeight = currentType === 'assignment'
-                    ? 146.558
-                    : 125.222;
-
-                  let width = maxWidth;
-                  let height = width / ratio;
-
-                  if (height > maxHeight) {
-                    height = maxHeight;
-                    width = height * ratio;
-                  }
-
-                  img.style.setProperty('width', `${width}mm`, 'important');
-                  img.style.setProperty('height', `${height}mm`, 'important');
-                  img.style.setProperty('max-width', 'none', 'important');
-                  img.style.setProperty('max-height', 'none', 'important');
-                  img.style.setProperty('object-fit', 'fill', 'important');
-                }
-
-                if (img.closest('.logo-area')) {
-                  const maxWidth = 73.914;
-                  const maxHeight = 61.214;
-
-                  let width = maxWidth;
-                  let height = width / ratio;
-
-                  if (height > maxHeight) {
-                    height = maxHeight;
-                    width = height * ratio;
-                  }
-
-                  img.style.setProperty('width', `${width}mm`, 'important');
-                  img.style.setProperty('height', `${height}mm`, 'important');
-                  img.style.setProperty('max-width', 'none', 'important');
-                  img.style.setProperty('max-height', 'none', 'important');
-                  img.style.setProperty('object-fit', 'fill', 'important');
-                }
-              });
-            }
-          },
-
-          pagebreak: {
-            mode: ['avoid-all']
-          },
-
-          jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
+          } else {
+            return;
           }
-        }).from(element).save();
+
+          const fitted = fitImage(
+            naturalWidth,
+            naturalHeight,
+            maxWidth,
+            maxHeight
+          );
+
+          // Use high-resolution canvas for the image
+          const imageCanvas = document.createElement('canvas');
+
+          imageCanvas.width = naturalWidth;
+          imageCanvas.height = naturalHeight;
+
+          const context = imageCanvas.getContext('2d');
+
+          context.drawImage(
+            original,
+            0,
+            0,
+            naturalWidth,
+            naturalHeight
+          );
+
+          imageCanvas.className = img.className;
+          imageCanvas.style.cssText = img.style.cssText;
+
+          imageCanvas.style.setProperty(
+            'width',
+            `${fitted.width}mm`,
+            'important'
+          );
+
+          imageCanvas.style.setProperty(
+            'height',
+            `${fitted.height}mm`,
+            'important'
+          );
+
+          imageCanvas.style.setProperty(
+            'max-width',
+            'none',
+            'important'
+          );
+
+          imageCanvas.style.setProperty(
+            'max-height',
+            'none',
+            'important'
+          );
+
+          imageCanvas.style.setProperty(
+            'object-fit',
+            'fill',
+            'important'
+          );
+
+          img.replaceWith(imageCanvas);
+        });
+
+        // Keep the image and page layers in their original positions
+        const canvas = await html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          logging: false,
+          width: clone.offsetWidth,
+          height: clone.offsetHeight,
+          windowWidth: Math.max(window.innerWidth, clone.offsetWidth),
+          windowHeight: Math.max(window.innerHeight, clone.offsetHeight),
+          scrollX: 0,
+          scrollY: 0
+        });
+
+        // Create one-page A4 PDF
+        const { jsPDF } = window.jspdf;
+
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+
+        const imageData = canvas.toDataURL('image/jpeg', 0.98);
+
+        pdf.addImage(
+          imageData,
+          'JPEG',
+          0,
+          0,
+          210,
+          297,
+          undefined,
+          'FAST'
+        );
+
+        pdf.save(fileName);
 
         toast('PDF downloaded successfully.');
 
@@ -1239,6 +1342,11 @@
         toast('PDF could not be generated. Please try again.');
 
       } finally {
+        // Remove temporary PDF rendering copy
+        if (wrapper && wrapper.parentNode) {
+          wrapper.parentNode.removeChild(wrapper);
+        }
+
         downloadBtn.disabled = false;
         downloadBtn.textContent = '↓ Download PDF';
       }
@@ -1297,6 +1405,7 @@
       toast('Form cleared.');
     });
 
+    // PWA installation
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
@@ -1321,6 +1430,7 @@
       toast('MIU Cover installed.');
     });
 
+    // Service Worker
     if (
       'serviceWorker' in navigator &&
       (location.protocol === 'https:' || location.hostname === 'localhost')
@@ -1332,6 +1442,7 @@
       });
     }
 
+    // Restore saved data
     restoreData();
   </script>
 </body>
