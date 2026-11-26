@@ -180,6 +180,38 @@
 
     textarea { resize:vertical; min-height:65px; }
 
+    /* Custom date input */
+    .date-picker-wrapper {
+      position:relative;
+      width:100%;
+    }
+
+    .date-display {
+      width:100%;
+      cursor:pointer;
+      background:#fff;
+      padding-right:38px;
+    }
+
+    .date-picker-icon {
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      pointer-events:none;
+      font-size:17px;
+      color:#647067;
+    }
+
+    .native-date-picker {
+      position:absolute;
+      width:1px;
+      height:1px;
+      opacity:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+
     .form-actions {
       display:flex;
       gap:9px;
@@ -645,7 +677,28 @@
 
             <div class="field">
               <label for="date">Submission Date</label>
-              <input id="date" type="date" title="Select submission date">
+
+              <div class="date-picker-wrapper">
+                <input
+                  id="date"
+                  class="date-display"
+                  type="text"
+                  placeholder="DD-MM-YYYY"
+                  readonly
+                  autocomplete="off"
+                  title="Select submission date"
+                >
+
+                <span class="date-picker-icon">▦</span>
+
+                <input
+                  id="datePicker"
+                  class="native-date-picker"
+                  type="date"
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+              </div>
             </div>
 
             <div class="field full">
@@ -846,7 +899,7 @@
       }, 2600);
     }
 
-    // Format calendar date as DD-MM-YY
+    // Format calendar date as DD-MM-YYYY
     function formatDate(dateValue) {
       if (!dateValue) return '';
 
@@ -854,12 +907,44 @@
 
       if (!year || !month || !day) return '';
 
-      return `${day}-${month}-${year.slice(-2)}`;
+      return `${day}-${month}-${year}`;
+    }
+
+    // Convert DD-MM-YYYY into YYYY-MM-DD for the native date picker
+    function dateToISO(dateValue) {
+      if (!dateValue) return '';
+
+      const parts = dateValue.split('-');
+
+      if (parts.length !== 3) return '';
+
+      const [day, month, year] = parts;
+
+      if (!day || !month || !year) return '';
+
+      return `${year}-${month}-${day}`;
     }
 
     // Allow digits only in Batch field
     function sanitizeBatch() {
       $('batch').value = $('batch').value.replace(/[^0-9]/g, '').slice(0, 3);
+    }
+
+    // Open the native date picker
+    function openDatePicker() {
+      const picker = $('datePicker');
+
+      try {
+        if (typeof picker.showPicker === 'function') {
+          picker.showPicker();
+        } else {
+          picker.focus();
+          picker.click();
+        }
+      } catch (error) {
+        picker.focus();
+        picker.click();
+      }
     }
 
     function setType(type) {
@@ -879,7 +964,6 @@
       $('border-layer').classList.toggle('lab', !isAssignment);
       $('pdf-content').classList.toggle('lab-layout', !isAssignment);
 
-      // Dynamically change form labels
       $('docNoLabel').textContent = isAssignment
         ? 'Assignment No.'
         : 'Report No.';
@@ -892,7 +976,6 @@
         ? 'Write your assignment name'
         : 'Write your report name';
 
-      // Dynamically change the cover page label
       $('p-name-label').textContent = isAssignment
         ? 'Assignment Name: '
         : 'Report Name: ';
@@ -907,8 +990,8 @@
         fields.map(id => [id, $(id).value.trim()])
       );
 
-      // Show the complete department name without duplication
-      $('p-dept').textContent = v.dept || 'Department of Computer Science and Engineering';
+      $('p-dept').textContent =
+        v.dept || 'Department of Computer Science and Engineering';
 
       $('p-doc-type').textContent =
         (currentType === 'assignment' ? 'ASSIGNMENT-' : 'LAB REPORT-') +
@@ -926,10 +1009,9 @@
       $('p-teacher-desig').textContent = v.teacherDesig;
       $('p-teacher-dept').textContent = v.teacherDept;
 
-      const formattedDate = formatDate(v.date);
-
-      $('p-lab-date-val').textContent = formattedDate;
-      $('p-bottom-date-val').textContent = formattedDate;
+      // Date is already formatted as DD-MM-YYYY
+      $('p-lab-date-val').textContent = v.date;
+      $('p-bottom-date-val').textContent = v.date;
 
       try {
         localStorage.setItem(
@@ -948,16 +1030,25 @@
         if (saved && saved.values) {
           fields.forEach(id => {
             if (saved.values[id] !== undefined) {
-              const value = saved.values[id];
+              let value = saved.values[id];
 
-              // Restore only values that exist in the updated dropdowns
-              if ($(id).tagName === 'SELECT') {
+              if (id === 'date') {
+                // Support previously saved DD-MM-YY or DD-MM-YYYY dates
+                if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                  value = formatDate(value);
+                }
+
+                $('date').value = value;
+                $('datePicker').value = dateToISO(value);
+
+              } else if ($(id).tagName === 'SELECT') {
                 const optionExists = Array.from($(id).options)
                   .some(option => option.value === value);
 
                 if (optionExists) {
                   $(id).value = value;
                 }
+
               } else {
                 $(id).value = value;
               }
@@ -1024,14 +1115,35 @@
     $('btn-assign').addEventListener('click', () => setType('assignment'));
     $('btn-lab').addEventListener('click', () => setType('lab'));
 
-    fields.forEach(id => {
-      $(id).addEventListener('input', updatePreview);
-      $(id).addEventListener('change', updatePreview);
+    // Open calendar when the visible date field is clicked
+    $('date').addEventListener('click', openDatePicker);
+
+    // Also open calendar when the date field receives keyboard focus
+    $('date').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openDatePicker();
+      }
     });
 
-    $('batch').addEventListener('input', () => {
-      sanitizeBatch();
+    // Update visible date after selection
+    $('datePicker').addEventListener('change', () => {
+      $('date').value = formatDate($('datePicker').value);
       updatePreview();
+    });
+
+    fields.forEach(id => {
+      if (id === 'date') return;
+
+      $(id).addEventListener('input', () => {
+        if (id === 'batch') {
+          sanitizeBatch();
+        }
+
+        updatePreview();
+      });
+
+      $(id).addEventListener('change', updatePreview);
     });
 
     $('downloadBtn').addEventListener('click', downloadPDF);
@@ -1048,6 +1160,8 @@
           $(id).value = '';
         }
       });
+
+      $('datePicker').value = '';
 
       setType('assignment');
       updatePreview();
