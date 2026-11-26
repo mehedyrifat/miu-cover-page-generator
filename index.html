@@ -660,7 +660,15 @@
 
             <div class="field">
               <label for="batch">Batch</label>
-              <input id="batch" inputmode="numeric" placeholder="e.g. 62">
+              <input
+                id="batch"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="3"
+                placeholder="e.g. 62"
+                autocomplete="off"
+              >
             </div>
 
             <div class="field full">
@@ -849,6 +857,11 @@
       return `${day}-${month}-${year.slice(-2)}`;
     }
 
+    // Allow digits only in Batch field
+    function sanitizeBatch() {
+      $('batch').value = $('batch').value.replace(/[^0-9]/g, '').slice(0, 3);
+    }
+
     function setType(type) {
       currentType = type;
 
@@ -888,6 +901,8 @@
     }
 
     function updatePreview() {
+      sanitizeBatch();
+
       const v = Object.fromEntries(
         fields.map(id => [id, $(id).value.trim()])
       );
@@ -957,6 +972,7 @@
         console.warn('Could not restore saved form data', e);
       }
 
+      sanitizeBatch();
       updatePreview();
     }
 
@@ -1011,6 +1027,11 @@
     fields.forEach(id => {
       $(id).addEventListener('input', updatePreview);
       $(id).addEventListener('change', updatePreview);
+    });
+
+    $('batch').addEventListener('input', () => {
+      sanitizeBatch();
+      updatePreview();
     });
 
     $('downloadBtn').addEventListener('click', downloadPDF);
