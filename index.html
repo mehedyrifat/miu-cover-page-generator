@@ -1,0 +1,991 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#007A33">
+  <meta name="description" content="Generate Manarat International University assignment and lab report cover pages.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MIU Cover">
+  <title>MIU Cover Page Generator</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./assets/icon-192.png">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --green:#007A33;
+      --green-dark:#005d27;
+      --bg:#f3f6f4;
+      --ink:#17211b;
+      --muted:#647067;
+      --miu-blue:#1c3d68;
+    }
+
+    * { box-sizing:border-box; }
+
+    @page {
+      size:A4;
+      margin:12.7mm;
+    }
+
+    body {
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      color:var(--ink);
+      background:var(--bg);
+    }
+
+    .topbar {
+      background:var(--green);
+      color:#fff;
+      padding:15px 22px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      box-shadow:0 3px 12px #0001;
+    }
+
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .brand img {
+      width:42px;
+      height:42px;
+      object-fit:contain;
+      background:#fff;
+      border-radius:10px;
+      padding:4px;
+    }
+
+    .brand-title { font-weight:800; font-size:17px; }
+    .brand-sub { font-size:11px; opacity:.85; margin-top:3px; }
+    .top-actions { display:flex; gap:8px; align-items:center; }
+
+    button { font:inherit; cursor:pointer; }
+
+    .install-btn,.secondary-btn {
+      border:1px solid #ffffff80;
+      color:#fff;
+      background:#ffffff18;
+      border-radius:9px;
+      padding:9px 13px;
+      font-size:13px;
+      font-weight:700;
+    }
+
+    .install-btn[hidden] { display:none; }
+
+    .page {
+      max-width:1450px;
+      margin:24px auto;
+      padding:0 18px 28px;
+    }
+
+    .intro { margin-bottom:18px; }
+    .intro h1 { margin:0 0 5px; font-size:24px; }
+    .intro p { margin:0; color:var(--muted); font-size:13px; }
+
+    .workspace {
+      display:grid;
+      grid-template-columns:minmax(310px,390px) minmax(0,1fr);
+      gap:22px;
+      align-items:start;
+    }
+
+    .panel {
+      background:#fff;
+      border:1px solid #e5ebe6;
+      border-radius:15px;
+      box-shadow:0 5px 22px #1b38220a;
+    }
+
+    .form-panel { padding:21px; }
+
+    .panel-heading {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:17px;
+    }
+
+    .panel-heading h2 { margin:0; font-size:17px; }
+
+    .type-toggle {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-bottom:18px;
+    }
+
+    .type-toggle button {
+      border:1px solid #cbd8cf;
+      background:#fff;
+      color:var(--green);
+      border-radius:9px;
+      padding:11px 8px;
+      font-weight:700;
+    }
+
+    .type-toggle button.active {
+      background:var(--green);
+      color:#fff;
+      border-color:var(--green);
+    }
+
+    .form-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .field { min-width:0; }
+    .field.full { grid-column:1/-1; }
+
+    label {
+      display:block;
+      font-size:11px;
+      font-weight:700;
+      color:#46534a;
+      margin:0 0 6px;
+    }
+
+    input,select,textarea {
+      width:100%;
+      border:1px solid #d6dfd8;
+      border-radius:8px;
+      padding:10px 11px;
+      font:13px Inter,Arial,sans-serif;
+      color:var(--ink);
+      background:#fff;
+      outline:none;
+    }
+
+    input:focus,select:focus,textarea:focus {
+      border-color:var(--green);
+      box-shadow:0 0 0 3px #007a3314;
+    }
+
+    textarea { resize:vertical; min-height:65px; }
+
+    .form-actions {
+      display:flex;
+      gap:9px;
+      margin-top:17px;
+    }
+
+    .primary-btn {
+      flex:1;
+      border:0;
+      border-radius:9px;
+      padding:12px 14px;
+      background:var(--green);
+      color:#fff;
+      font-weight:800;
+    }
+
+    .primary-btn:hover { background:var(--green-dark); }
+
+    .clear-btn {
+      border:1px solid #d6dfd8;
+      border-radius:9px;
+      padding:12px 14px;
+      background:#fff;
+      color:#455148;
+      font-weight:700;
+    }
+
+    .hint {
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.5;
+      margin:12px 0 0;
+    }
+
+    .preview-panel { padding:17px; min-width:0; }
+
+    .preview-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin:0 0 13px;
+    }
+
+    .preview-head h2 { font-size:16px; margin:0; }
+
+    .paper-wrap {
+      background:#e5eae6;
+      border-radius:10px;
+      padding:18px;
+      overflow:auto;
+      display:flex;
+      justify-content:center;
+    }
+
+    #pdf-content {
+      position:relative;
+      flex:0 0 auto;
+      width:210mm;
+      height:297mm;
+      background:#fff;
+      color:#000;
+      font-family:"Times New Roman",serif;
+      text-align:center;
+      overflow:hidden;
+      box-shadow:0 2px 14px #0002;
+    }
+
+    /* ASSIGNMENT: Original solid border unchanged */
+    .border-layer {
+      position:absolute;
+      inset:3.5mm;
+      border:0.3mm solid #111;
+      border-radius:0;
+      pointer-events:none;
+      z-index:5;
+    }
+
+    /* LAB REPORT: Black Dotted Border */
+    .border-layer.lab {
+      inset:3.5mm;
+      border:1.5pt dotted #000;
+      border-radius:0;
+      background:none;
+    }
+
+    .watermark {
+      position:absolute;
+      height:auto;
+      top:190mm;
+      left:50%;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      z-index:0;
+      object-fit:contain;
+    }
+
+    .watermark-text { display:none; }
+
+    .content-wrapper {
+      position:absolute;
+      inset:0;
+      z-index:2;
+      height:100%;
+      padding:0;
+      display:block;
+    }
+
+    #layout-assign-top, #layout-lab-top { position:static; }
+
+    /* ASSIGNMENT */
+    .uni-name {
+      position:absolute;
+      top:20mm;
+      left:8mm;
+      right:8mm;
+      color:#1F3864;
+      font:bold 28pt/1.12 "Times New Roman",serif;
+      letter-spacing:0;
+      margin:0;
+    }
+
+    .logo-area {
+      position:absolute;
+      top:53mm;
+      left:50%;
+      transform:translateX(-50%);
+    }
+
+    /* Logo: 2.91 x 2.41 inches */
+    .logo-area img {
+      display:block;
+      width:73.914mm;
+      height:61.214mm;
+      object-fit:contain;
+      margin:0;
+    }
+
+    .dept-name {
+      position:absolute;
+      top:126mm;
+      left:7mm;
+      right:7mm;
+      color:#2F5597;
+      font:bold 22pt/1.16 Arial,sans-serif;
+      margin:0;
+      text-transform:uppercase;
+    }
+
+    .dept-name span { font:inherit; }
+
+    .doc-type {
+      position:absolute;
+      top:149mm;
+      left:8mm;
+      right:8mm;
+      font:bold 20pt/1.15 "Times New Roman",serif;
+      text-decoration:underline;
+      margin:0;
+    }
+
+    .course-info {
+      position:absolute;
+      top:161mm;
+      left:7mm;
+      right:7mm;
+      font:bold 18pt/1.45 "Times New Roman",serif;
+      margin:0;
+    }
+
+    .course-info p { margin:0; }
+    .course-info span { font-weight:bold; }
+
+    .report-name {
+      position:absolute;
+      top:194mm;
+      left:9mm;
+      right:9mm;
+      font:bold 18pt/1.22 "Times New Roman",serif;
+      margin:0;
+      overflow-wrap:anywhere;
+    }
+
+    .lab-date {
+      position:absolute;
+      top:269mm;
+      left:7mm;
+      right:7mm;
+      font:bold 20pt/1.2 "Times New Roman",serif;
+      text-align:left;
+    }
+
+    .spacer { display:none; }
+
+    /* Submission box: 18pt normal */
+    .submission-block {
+      position:absolute;
+      top:228mm;
+      left:8mm;
+      right:8mm;
+      height:40mm;
+      width:auto;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      text-align:left;
+      padding:0;
+      margin:0;
+      gap:0;
+      border:.3mm solid #111;
+    }
+
+    .sub-col {
+      width:auto;
+      overflow-wrap:anywhere;
+      padding:1.5mm 2mm;
+    }
+
+    .sub-col:first-child { border-right:.3mm solid #111; }
+
+    .sub-col h4 {
+      color:#416b91;
+      font:normal 18pt/1.2 "Times New Roman",serif;
+      margin:0 0 1mm;
+      text-decoration:underline;
+    }
+
+    .sub-col p {
+      font:normal 18pt/1.2 "Times New Roman",serif;
+      margin:0;
+    }
+
+    .bottom-date {
+      position:absolute;
+      top:273mm;
+      left:8mm;
+      right:8mm;
+      width:auto;
+      text-align:left;
+      padding:0;
+      font:bold 20pt/1.2 "Times New Roman",serif;
+    }
+
+    /* ASSIGNMENT WATERMARK: 7.25 x 5.77 inches */
+    #pdf-content:not(.lab-layout) .watermark {
+      width:184.15mm;
+      height:146.558mm;
+      top:191mm;
+      opacity:.10;
+    }
+
+    /* LAB REPORT WATERMARK: 6.17 x 4.93 inches */
+    #pdf-content.lab-layout .watermark {
+      width:156.718mm;
+      height:125.222mm;
+      top:190mm;
+      opacity:.09;
+    }
+
+    /* LAB REPORT LAYOUT */
+    #pdf-content.lab-layout .logo-area { top:17mm; }
+
+    #pdf-content.lab-layout .logo-area img {
+      width:73.914mm;
+      height:61.214mm;
+    }
+
+    #pdf-content.lab-layout .uni-name br { display:none; }
+
+    #pdf-content.lab-layout .uni-name {
+      top:81mm;
+      left:8mm;
+      right:8mm;
+      white-space:nowrap;
+      font:bold 24pt/1.15 "Times New Roman",serif;
+      letter-spacing:0;
+    }
+
+    #pdf-content.lab-layout .dept-name {
+      top:105mm;
+      left:8mm;
+      right:8mm;
+      color:#843C0C;
+      font:bold 18pt/1.2 "Courier New",monospace;
+      letter-spacing:.25mm;
+    }
+
+    #pdf-content.lab-layout .doc-type {
+      top:121mm;
+      left:8mm;
+      right:8mm;
+      font:bold 20pt/1.2 "Times New Roman",serif;
+    }
+
+    #pdf-content.lab-layout .course-info {
+      top:137mm;
+      left:14mm;
+      right:14mm;
+      font:bold 18pt/1.4 "Times New Roman",serif;
+    }
+
+    #pdf-content.lab-layout .course-info p { margin:0 0 3mm; }
+
+    #pdf-content.lab-layout .report-name {
+      top:168mm;
+      left:14mm;
+      right:14mm;
+      font:bold 18pt/1.28 "Times New Roman",serif;
+    }
+
+    #pdf-content.lab-layout .lab-date {
+      top:190mm;
+      left:10mm;
+      right:10mm;
+      font:bold 20pt/1.2 "Times New Roman",serif;
+      text-align:center;
+      text-decoration:underline;
+    }
+
+    /* Lab Report information box */
+    #pdf-content.lab-layout .submission-block {
+      top:244mm;
+      left:15mm;
+      right:15mm;
+      height:38mm;
+      border:1pt solid #000;
+    }
+
+    #pdf-content.lab-layout .sub-col { padding:1.2mm 5mm; }
+
+    #pdf-content.lab-layout .sub-col:first-child {
+      border-right:1pt solid #000;
+    }
+
+    #pdf-content.lab-layout .sub-col h4 {
+      color:#416b91;
+      font:normal 18pt/1.2 "Times New Roman",serif;
+      margin:0 0 .5mm;
+      text-decoration:none;
+    }
+
+    #pdf-content.lab-layout .sub-col p {
+      font:normal 18pt/1.2 "Times New Roman",serif;
+      margin:0;
+    }
+
+    #pdf-content.lab-layout .bottom-date { display:none !important; }
+
+    .hidden { display:none !important; }
+
+    .toast {
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#17211b;
+      color:white;
+      padding:11px 16px;
+      border-radius:9px;
+      font-size:13px;
+      box-shadow:0 5px 20px #0003;
+      z-index:20;
+      display:none;
+    }
+
+    footer {
+      text-align:center;
+      color:#778078;
+      font-size:11px;
+      padding:8px 0 22px;
+    }
+
+    @media(max-width:900px) {
+      .workspace { grid-template-columns:1fr; }
+      .form-panel { max-width:none; }
+      .preview-panel { padding:12px; }
+    }
+
+    @media(max-width:520px) {
+      .topbar { padding:12px 14px; }
+      .brand-title { font-size:14px; }
+      .brand-sub { font-size:10px; }
+
+      .install-btn,.secondary-btn {
+        padding:8px 9px;
+        font-size:11px;
+      }
+
+      .page { margin:18px auto; padding:0 10px 20px; }
+      .intro h1 { font-size:20px; }
+      .form-panel { padding:16px; }
+      .form-grid { grid-template-columns:1fr; }
+      .field.full { grid-column:auto; }
+      .paper-wrap { justify-content:flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="./assets/miu-logo.png" alt="MIU logo">
+      <div>
+        <div class="brand-title">MIU Cover Page Generator</div>
+        <div class="brand-sub">Assignment & Lab Report Creator</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="installBtn" class="install-btn" hidden>＋ Install App</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="intro">
+      <h1>Create your MIU cover page</h1>
+      <p>Enter your details, check the A4 preview, and download a print-ready PDF.</p>
+    </div>
+
+    <div class="workspace">
+      <section class="panel form-panel">
+        <div class="panel-heading">
+          <h2>Document Details</h2>
+        </div>
+
+        <div class="type-toggle">
+          <button id="btn-assign" class="active" type="button">Assignment</button>
+          <button id="btn-lab" type="button">Lab Report</button>
+        </div>
+
+        <form id="detailsForm" autocomplete="on">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="dept">Department</label>
+              <select id="dept">
+                <option>COMPUTER SCIENCE & ENGINEERING</option>
+                <option>ELECTRICAL & ELECTRONIC ENGINEERING</option>
+                <option>BUSINESS ADMINISTRATION</option>
+                <option>ENGLISH</option>
+                <option>LAW</option>
+                <option>PHARMACY</option>
+                <option>CIVIL ENGINEERING</option>
+                <option>ARCHITECTURE</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="docNo">Document No.</label>
+              <input id="docNo" placeholder="01" value="01">
+            </div>
+
+            <div class="field">
+              <label for="date">Submission Date</label>
+              <input id="date" placeholder="e.g. 26-11-2026">
+            </div>
+
+            <div class="field full">
+              <label for="courseTitle">Course Title</label>
+              <input id="courseTitle" placeholder="Course title">
+            </div>
+
+            <div class="field">
+              <label for="courseCode">Course Code</label>
+              <input id="courseCode" placeholder="e.g. CSE 3101">
+            </div>
+
+            <div class="field">
+              <label for="batch">Batch</label>
+              <input id="batch" inputmode="numeric" placeholder="e.g. 62">
+            </div>
+
+            <div class="field full">
+              <label for="reportName">Report / Assignment Name</label>
+              <textarea id="reportName" placeholder="Write your topic or experiment name"></textarea>
+            </div>
+
+            <div class="field">
+              <label for="studentName">Student Name</label>
+              <input id="studentName" placeholder="Your full name">
+            </div>
+
+            <div class="field">
+              <label for="studentId">Student ID</label>
+              <input id="studentId" placeholder="Your student ID">
+            </div>
+
+            <div class="field">
+              <label for="teacherName">Submitted To — Teacher Name</label>
+              <input id="teacherName" placeholder="Teacher name">
+            </div>
+
+            <div class="field">
+              <label for="teacherDesig">Teacher Designation</label>
+              <input id="teacherDesig" placeholder="e.g. Lecturer">
+            </div>
+
+            <div class="field full">
+              <label for="teacherDept">Teacher Department</label>
+              <input id="teacherDept" placeholder="e.g. Department of CSE, MIU">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-btn" id="downloadBtn" type="button">↓ Download PDF</button>
+            <button class="clear-btn" id="clearBtn" type="button">Clear</button>
+          </div>
+
+          <p class="hint">Your details are saved in this browser on this device. They are not uploaded to a server.</p>
+        </form>
+      </section>
+
+      <section class="panel preview-panel">
+        <div class="preview-head">
+          <h2>Live A4 Preview</h2>
+          <span class="hint">A4 · Portrait</span>
+        </div>
+
+        <div class="paper-wrap">
+          <div id="pdf-content">
+            <div id="border-layer" class="border-layer"></div>
+
+            <img class="watermark" src="./assets/miu-watermark.png" alt="">
+
+            <div class="content-wrapper">
+              <div id="layout-assign-top">
+                <div class="uni-name">MANARAT INTERNATIONAL<br>UNIVERSITY</div>
+                <div class="logo-area">
+                  <img src="./assets/miu-logo.png" alt="MIU Logo">
+                </div>
+              </div>
+
+              <div id="layout-lab-top" class="hidden">
+                <div class="logo-area">
+                  <img src="./assets/miu-logo.png" alt="MIU Logo">
+                </div>
+                <div class="uni-name">MANARAT INTERNATIONAL<br>UNIVERSITY</div>
+              </div>
+
+              <div class="dept-name">
+                DEPARTMENT OF <span id="p-dept">COMPUTER SCIENCE & ENGINEERING</span>
+              </div>
+
+              <div class="doc-type" id="p-doc-type">ASSIGNMENT-01</div>
+
+              <div class="course-info">
+                <p>Course Title: <span id="p-course-title"></span></p>
+                <p>Course Code: <span id="p-course-code"></span></p>
+              </div>
+
+              <div class="report-name">
+                Report Name: <span id="p-report-name"></span>
+              </div>
+
+              <div class="lab-date hidden" id="p-lab-date">
+                Submission date: <span id="p-lab-date-val"></span>
+              </div>
+
+              <div class="spacer"></div>
+
+              <div class="submission-block">
+                <div class="sub-col">
+                  <h4>Submitted by:</h4>
+                  <p id="p-student-name"></p>
+                  <p>ID: <span id="p-student-id"></span></p>
+                  <p>Batch: <span id="p-batch"></span></p>
+                </div>
+
+                <div class="sub-col">
+                  <h4>Submitted to:</h4>
+                  <p id="p-teacher-name"></p>
+                  <p id="p-teacher-desig"></p>
+                  <p id="p-teacher-dept"></p>
+                </div>
+              </div>
+
+              <div class="bottom-date" id="p-bottom-date">
+                Submission date: <span id="p-bottom-date-val"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>MIU Cover Page Generator · Made for Manarat International University students</footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const fields = [
+      'dept',
+      'docNo',
+      'date',
+      'courseTitle',
+      'courseCode',
+      'reportName',
+      'studentName',
+      'studentId',
+      'batch',
+      'teacherName',
+      'teacherDesig',
+      'teacherDept'
+    ];
+
+    let currentType = 'assignment';
+    let deferredInstallPrompt = null;
+
+    function toast(message) {
+      const el = $('toast');
+      el.textContent = message;
+      el.style.display = 'block';
+
+      clearTimeout(toast.timer);
+
+      toast.timer = setTimeout(() => {
+        el.style.display = 'none';
+      }, 2600);
+    }
+
+    function setType(type) {
+      currentType = type;
+
+      $('btn-assign').classList.toggle('active', type === 'assignment');
+      $('btn-lab').classList.toggle('active', type === 'lab');
+
+      $('layout-assign-top').classList.toggle('hidden', type !== 'assignment');
+      $('layout-lab-top').classList.toggle('hidden', type !== 'lab');
+
+      $('p-lab-date').classList.toggle('hidden', type !== 'lab');
+      $('p-bottom-date').classList.toggle('hidden', type !== 'assignment');
+
+      $('border-layer').classList.toggle('lab', type === 'lab');
+      $('pdf-content').classList.toggle('lab-layout', type === 'lab');
+
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const v = Object.fromEntries(
+        fields.map(id => [id, $(id).value.trim()])
+      );
+
+      $('p-dept').innerHTML = v.dept.replace(' & ', ' &amp;<br>');
+
+      $('p-doc-type').textContent =
+        (currentType === 'assignment' ? 'ASSIGNMENT-' : 'LAB REPORT-') +
+        (v.docNo || '01');
+
+      $('p-course-title').textContent = v.courseTitle;
+      $('p-course-code').textContent = v.courseCode;
+      $('p-report-name').textContent = v.reportName;
+
+      $('p-student-name').textContent = v.studentName;
+      $('p-student-id').textContent = v.studentId;
+      $('p-batch').textContent = v.batch;
+
+      $('p-teacher-name').textContent = v.teacherName;
+      $('p-teacher-desig').textContent = v.teacherDesig;
+      $('p-teacher-dept').textContent = v.teacherDept;
+
+      $('p-lab-date-val').textContent = v.date;
+      $('p-bottom-date-val').textContent = v.date;
+
+      try {
+        localStorage.setItem(
+          'miuCoverData',
+          JSON.stringify({values:v, type:currentType})
+        );
+      } catch(e) {}
+    }
+
+    function restoreData() {
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem('miuCoverData') || 'null'
+        );
+
+        if (saved && saved.values) {
+          fields.forEach(id => {
+            if (saved.values[id] !== undefined) {
+              $(id).value = saved.values[id];
+            }
+          });
+
+          if (saved.type === 'lab') {
+            setType('lab');
+          }
+        }
+      } catch(e) {
+        console.warn('Could not restore saved form data', e);
+      }
+
+      updatePreview();
+    }
+
+    async function downloadPDF() {
+      if (typeof html2pdf === 'undefined') {
+        toast('PDF library is unavailable. Connect to the internet and reload.');
+        return;
+      }
+
+      const element = $('pdf-content');
+
+      const studentId = $('studentId').value
+        .trim()
+        .replace(/[^a-z0-9_-]/gi, '') || 'Student';
+
+      const fileName =
+        `${studentId}_${currentType === 'assignment' ? 'Assignment' : 'LabReport'}.pdf`;
+
+      $('downloadBtn').disabled = true;
+      $('downloadBtn').textContent = 'Preparing PDF...';
+
+      try {
+        await html2pdf().set({
+          margin:0,
+          filename:fileName,
+          image:{type:'jpeg',quality:0.98},
+          html2canvas:{
+            scale:2,
+            useCORS:true,
+            backgroundColor:'#ffffff'
+          },
+          jsPDF:{
+            unit:'mm',
+            format:'a4',
+            orientation:'portrait'
+          }
+        }).from(element).save();
+
+        toast('PDF downloaded successfully.');
+      } catch(err) {
+        console.error(err);
+        toast('PDF could not be generated. Please try again.');
+      } finally {
+        $('downloadBtn').disabled = false;
+        $('downloadBtn').textContent = '↓ Download PDF';
+      }
+    }
+
+    $('btn-assign').addEventListener('click', () => setType('assignment'));
+    $('btn-lab').addEventListener('click', () => setType('lab'));
+
+    fields.forEach(id => {
+      $(id).addEventListener('input', updatePreview);
+      $(id).addEventListener('change', updatePreview);
+    });
+
+    $('downloadBtn').addEventListener('click', downloadPDF);
+
+    $('clearBtn').addEventListener('click', () => {
+      if (!confirm('Clear all entered details?')) return;
+
+      fields.forEach(id => {
+        if (id === 'dept') {
+          $(id).selectedIndex = 0;
+        } else if (id === 'docNo') {
+          $(id).value = '01';
+        } else {
+          $(id).value = '';
+        }
+      });
+
+      setType('assignment');
+      updatePreview();
+      toast('Form cleared.');
+    });
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      $('installBtn').hidden = false;
+    });
+
+    $('installBtn').addEventListener('click', async () => {
+      if (!deferredInstallPrompt) {
+        toast('Use your browser menu and choose Install app / Add to Home Screen.');
+        return;
+      }
+
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+
+      deferredInstallPrompt = null;
+      $('installBtn').hidden = true;
+    });
+
+    window.addEventListener('appinstalled', () => {
+      $('installBtn').hidden = true;
+      toast('MIU Cover installed.');
+    });
+
+    if (
+      'serviceWorker' in navigator &&
+      (location.protocol === 'https:' || location.hostname === 'localhost')
+    ) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('./sw.js')
+          .catch(err => console.error('Service worker registration failed:', err));
+      });
+    }
+
+    restoreData();
+  </script>
+</body>
+</html>
