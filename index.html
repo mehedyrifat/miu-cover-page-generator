@@ -551,6 +551,18 @@
       padding:8px 0 22px;
     }
 
+    /* Developer credit */
+    .developer-credit {
+      margin-top:9px;
+      font-size:14px;
+      color:#46534a;
+    }
+
+    .developer-credit strong {
+      font-weight:800;
+      color:#007A33;
+    }
+
     @media(max-width:900px) {
       .workspace { grid-template-columns:1fr; }
       .form-panel { max-width:none; }
@@ -784,7 +796,12 @@
     </div>
   </main>
 
-  <footer>MIU Cover Page Generator · Made for Manarat International University students</footer>
+  <footer>
+    <div>MIU Cover Page Generator · Made for Manarat International University students</div>
+    <div class="developer-credit">
+      Developed by <strong>Mehedy Hasan Rifat</strong>
+    </div>
+  </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
