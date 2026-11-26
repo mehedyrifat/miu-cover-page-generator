@@ -180,7 +180,6 @@
 
     textarea { resize:vertical; min-height:65px; }
 
-    /* Custom date input */
     .date-picker-wrapper {
       position:relative;
       width:100%;
@@ -278,12 +277,10 @@
       text-align:center;
       overflow:hidden;
       box-shadow:0 2px 14px #0002;
-
       page-break-inside:avoid !important;
       break-inside:avoid !important;
     }
 
-    /* ASSIGNMENT: Original solid border */
     .border-layer {
       position:absolute;
       inset:3.5mm;
@@ -293,7 +290,6 @@
       z-index:5;
     }
 
-    /* LAB REPORT: Black Dotted Border */
     .border-layer.lab {
       inset:3.5mm;
       border:1.5pt dotted #000;
@@ -301,7 +297,6 @@
       background:none;
     }
 
-    /* WATERMARK BASE */
     .watermark {
       position:absolute;
       top:190mm;
@@ -326,7 +321,6 @@
 
     #layout-assign-top, #layout-lab-top { position:static; }
 
-    /* ASSIGNMENT */
     .uni-name {
       position:absolute;
       top:20mm;
@@ -343,8 +337,6 @@
       top:53mm;
       left:50%;
       transform:translateX(-50%);
-
-      /* Fixed logo area; image proportions remain natural */
       width:73.914mm;
       height:61.214mm;
       display:flex;
@@ -352,7 +344,6 @@
       justify-content:center;
     }
 
-    /* LOGO DISTORTION FIX */
     .logo-area img {
       display:block;
       width:100%;
@@ -421,7 +412,6 @@
 
     .spacer { display:none; }
 
-    /* Assignment Submission Box */
     .submission-block {
       position:absolute;
       top:228mm;
@@ -469,7 +459,6 @@
       font:bold 20pt/1.2 "Times New Roman",serif;
     }
 
-    /* ASSIGNMENT WATERMARK: Fixed box with natural image ratio */
     #pdf-content:not(.lab-layout) .watermark {
       width:184.15mm;
       height:146.558mm;
@@ -481,7 +470,6 @@
       object-position:center;
     }
 
-    /* LAB REPORT WATERMARK: Fixed box with natural image ratio */
     #pdf-content.lab-layout .watermark {
       width:156.718mm;
       height:125.222mm;
@@ -492,8 +480,6 @@
       object-fit:contain;
       object-position:center;
     }
-
-    /* LAB REPORT LAYOUT */
 
     #pdf-content.lab-layout .logo-area {
       top:17mm;
@@ -508,7 +494,6 @@
       object-position:center;
     }
 
-    /* University Name */
     #pdf-content.lab-layout .uni-name br {
       display:none;
     }
@@ -522,7 +507,6 @@
       letter-spacing:0;
     }
 
-    /* Department */
     #pdf-content.lab-layout .dept-name {
       top:103mm;
       left:8mm;
@@ -532,7 +516,6 @@
       letter-spacing:.25mm;
     }
 
-    /* LAB REPORT */
     #pdf-content.lab-layout .doc-type {
       top:119mm;
       left:8mm;
@@ -540,7 +523,6 @@
       font:bold 20pt/1.2 "Times New Roman",serif;
     }
 
-    /* Course Title and Course Code */
     #pdf-content.lab-layout .course-info {
       top:136mm;
       left:14mm;
@@ -552,7 +534,6 @@
       margin:0 0 3mm;
     }
 
-    /* Report Name */
     #pdf-content.lab-layout .report-name {
       top:169mm;
       left:14mm;
@@ -560,7 +541,6 @@
       font:bold 18pt/1.28 "Times New Roman",serif;
     }
 
-    /* Submission Date */
     #pdf-content.lab-layout .lab-date {
       top:190mm;
       left:10mm;
@@ -570,7 +550,6 @@
       text-decoration:underline;
     }
 
-    /* Lab Report Submission Box: Original position preserved */
     #pdf-content.lab-layout .submission-block {
       top:244mm;
       left:15mm;
@@ -627,7 +606,6 @@
       padding:8px 0 22px;
     }
 
-    /* Developer credit */
     .developer-credit {
       margin-top:9px;
       font-size:14px;
@@ -954,7 +932,7 @@
       return `${day}-${month}-${year}`;
     }
 
-    // Convert DD-MM-YYYY into YYYY-MM-DD for the native date picker
+    // Convert DD-MM-YYYY into YYYY-MM-DD
     function dateToISO(dateValue) {
       if (!dateValue) return '';
 
@@ -974,7 +952,7 @@
       $('batch').value = $('batch').value.replace(/[^0-9]/g, '').slice(0, 3);
     }
 
-    // Open the native date picker
+    // Open native date picker
     function openDatePicker() {
       const picker = $('datePicker');
 
@@ -1109,7 +1087,7 @@
       updatePreview();
     }
 
-    // Download PDF
+    // PDF DOWNLOAD - PRESERVE IMAGE ASPECT RATIOS
     async function downloadPDF() {
       if (typeof html2pdf === 'undefined') {
         toast('PDF library is unavailable. Connect to the internet and reload.');
@@ -1127,13 +1105,34 @@
 
       const downloadBtn = $('downloadBtn');
 
-      const originalHeight = element.style.height;
-
       downloadBtn.disabled = true;
       downloadBtn.textContent = 'Preparing PDF...';
 
       try {
-        element.style.height = '296mm';
+        // Wait for all original images to load
+        const images = Array.from(element.querySelectorAll('img'));
+
+        await Promise.all(
+          images.map(async (img) => {
+            if (!img.complete) {
+              await new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = resolve;
+              });
+            }
+
+            if (img.decode) {
+              await img.decode().catch(() => {});
+            }
+          })
+        );
+
+        // Save the original aspect ratios before html2canvas clones the page
+        const imageRatios = images.map((img) => ({
+          src: img.getAttribute('src'),
+          naturalWidth: img.naturalWidth,
+          naturalHeight: img.naturalHeight
+        }));
 
         await html2pdf().set({
           margin: 0,
@@ -1150,7 +1149,76 @@
             backgroundColor: '#ffffff',
             scrollX: 0,
             scrollY: 0,
-            logging: false
+            logging: false,
+
+            onclone: (clonedDoc) => {
+              const clonedContent = clonedDoc.getElementById('pdf-content');
+
+              if (!clonedContent) return;
+
+              // Restore natural image proportions in the PDF clone
+              const clonedImages = Array.from(
+                clonedContent.querySelectorAll('img')
+              );
+
+              clonedImages.forEach((img, index) => {
+                const original = imageRatios[index];
+
+                if (
+                  !original ||
+                  !original.naturalWidth ||
+                  !original.naturalHeight
+                ) {
+                  return;
+                }
+
+                const ratio =
+                  original.naturalWidth / original.naturalHeight;
+
+                if (img.classList.contains('watermark')) {
+                  const maxWidth = currentType === 'assignment'
+                    ? 184.15
+                    : 156.718;
+
+                  const maxHeight = currentType === 'assignment'
+                    ? 146.558
+                    : 125.222;
+
+                  let width = maxWidth;
+                  let height = width / ratio;
+
+                  if (height > maxHeight) {
+                    height = maxHeight;
+                    width = height * ratio;
+                  }
+
+                  img.style.setProperty('width', `${width}mm`, 'important');
+                  img.style.setProperty('height', `${height}mm`, 'important');
+                  img.style.setProperty('max-width', 'none', 'important');
+                  img.style.setProperty('max-height', 'none', 'important');
+                  img.style.setProperty('object-fit', 'fill', 'important');
+                }
+
+                if (img.closest('.logo-area')) {
+                  const maxWidth = 73.914;
+                  const maxHeight = 61.214;
+
+                  let width = maxWidth;
+                  let height = width / ratio;
+
+                  if (height > maxHeight) {
+                    height = maxHeight;
+                    width = height * ratio;
+                  }
+
+                  img.style.setProperty('width', `${width}mm`, 'important');
+                  img.style.setProperty('height', `${height}mm`, 'important');
+                  img.style.setProperty('max-width', 'none', 'important');
+                  img.style.setProperty('max-height', 'none', 'important');
+                  img.style.setProperty('object-fit', 'fill', 'important');
+                }
+              });
+            }
           },
 
           pagebreak: {
@@ -1171,8 +1239,6 @@
         toast('PDF could not be generated. Please try again.');
 
       } finally {
-        element.style.height = originalHeight;
-
         downloadBtn.disabled = false;
         downloadBtn.textContent = '↓ Download PDF';
       }
