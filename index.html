@@ -210,6 +210,28 @@
 
     textarea { resize:vertical; min-height:65px; }
 
+    /* DATE PICKER */
+    .date-display {
+      cursor:pointer;
+      background:#fff;
+    }
+
+    .date-display::placeholder {
+      color:#8a958d;
+    }
+
+    .native-date-picker {
+      position:fixed;
+      left:0;
+      bottom:0;
+      width:1px;
+      height:1px;
+      opacity:0;
+      pointer-events:none;
+      padding:0;
+      border:0;
+    }
+
     .form-actions {
       display:flex;
       gap:9px;
@@ -694,9 +716,26 @@
               <input id="docNo" placeholder="01" value="01">
             </div>
 
+            <!-- SUBMISSION DATE -->
             <div class="field">
               <label for="date">Submission Date</label>
-              <input id="date" placeholder="e.g. 26-11-2026">
+              <input
+                id="date"
+                class="date-display"
+                type="text"
+                placeholder="DD-MM-YYYY"
+                readonly
+                autocomplete="off"
+                title="Select submission date"
+              >
+
+              <input
+                id="datePicker"
+                class="native-date-picker"
+                type="date"
+                tabindex="-1"
+                aria-hidden="true"
+              >
             </div>
 
             <div class="field full">
@@ -738,7 +777,6 @@
             <div class="field">
               <label for="teacherDesig">Teacher Designation</label>
               <select id="teacherDesig">
-                <option value="">Select Teacher Designation</option>
                 <option value="Professor">Professor</option>
                 <option value="Associate Professor">Associate Professor</option>
                 <option value="Assistant Professor">Assistant Professor</option>
@@ -855,6 +893,65 @@
 
   <script>
     const $ = (id) => document.getElementById(id);
+
+    // ==========================================
+    // DATE FUNCTIONS
+    // ==========================================
+
+    function formatDate(date) {
+      if (!date) return '';
+
+      const parts = date.split('-');
+
+      // Convert YYYY-MM-DD to DD-MM-YYYY
+      if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+
+      return date;
+    }
+
+    function dateToISO(date) {
+      if (!date) return '';
+
+      const parts = date.split('-');
+
+      // Already in YYYY-MM-DD format
+      if (parts.length === 3 && parts[0].length === 4) {
+        return date;
+      }
+
+      // Convert DD-MM-YYYY to YYYY-MM-DD
+      if (parts.length === 3 && parts[2].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+
+      return '';
+    }
+
+    function openDatePicker() {
+      const picker = $('datePicker');
+
+      // Keep the calendar synchronized with the displayed date
+      picker.value = dateToISO($('date').value);
+
+      try {
+        if (typeof picker.showPicker === 'function') {
+          picker.showPicker();
+        } else {
+          picker.click();
+        }
+      } catch (error) {
+        picker.click();
+      }
+    }
+
+    $('date').addEventListener('click', openDatePicker);
+
+    $('datePicker').addEventListener('change', () => {
+      $('date').value = formatDate($('datePicker').value);
+      updatePreview();
+    });
 
     // ==========================================
     // PUBLIC STATISTICS
@@ -1007,6 +1104,14 @@
             }
           });
 
+          // Convert any previously saved ISO date to DD-MM-YYYY
+          $('date').value = formatDate($('date').value);
+
+          // Keep Professor as the default designation
+          if (!$('teacherDesig').value) {
+            $('teacherDesig').value = 'Professor';
+          }
+
           if (saved.type === 'lab') {
             setType('lab');
           }
@@ -1014,6 +1119,9 @@
       } catch(e) {
         console.warn('Could not restore saved form data', e);
       }
+
+      // Synchronize native calendar with restored date
+      $('datePicker').value = dateToISO($('date').value);
 
       updatePreview();
     }
@@ -1085,10 +1193,15 @@
           $(id).selectedIndex = 0;
         } else if (id === 'docNo') {
           $(id).value = '01';
+        } else if (id === 'teacherDesig') {
+          $(id).value = 'Professor';
         } else {
           $(id).value = '';
         }
       });
+
+      // Clear the native calendar too
+      $('datePicker').value = '';
 
       setType('assignment');
       updatePreview();
