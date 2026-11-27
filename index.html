@@ -11,18 +11,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="MIU Cover">
   <title>MIU Cover Page Generator</title>
-
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icon-192.png">
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- PDF Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root {
@@ -102,6 +97,36 @@
     .intro { margin-bottom:18px; }
     .intro h1 { margin:0 0 5px; font-size:24px; }
     .intro p { margin:0; color:var(--muted); font-size:13px; }
+
+    /* PUBLIC STATISTICS */
+    .stats-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+      margin-bottom:22px;
+    }
+
+    .stat-card {
+      background:#fff;
+      border:1px solid #e5ebe6;
+      border-radius:13px;
+      padding:17px;
+      text-align:center;
+      box-shadow:0 5px 22px #1b38220a;
+    }
+
+    .stat-number {
+      color:var(--green);
+      font-size:27px;
+      font-weight:800;
+      margin-bottom:5px;
+    }
+
+    .stat-label {
+      color:var(--muted);
+      font-size:12px;
+      font-weight:600;
+    }
 
     .workspace {
       display:grid;
@@ -185,37 +210,6 @@
 
     textarea { resize:vertical; min-height:65px; }
 
-    .date-picker-wrapper {
-      position:relative;
-      width:100%;
-    }
-
-    .date-display {
-      width:100%;
-      cursor:pointer;
-      background:#fff;
-      padding-right:38px;
-    }
-
-    .date-picker-icon {
-      position:absolute;
-      right:12px;
-      top:50%;
-      transform:translateY(-50%);
-      pointer-events:none;
-      font-size:17px;
-      color:#647067;
-    }
-
-    .native-date-picker {
-      position:absolute;
-      width:1px;
-      height:1px;
-      opacity:0;
-      pointer-events:none;
-      overflow:hidden;
-    }
-
     .form-actions {
       display:flex;
       gap:9px;
@@ -282,10 +276,9 @@
       text-align:center;
       overflow:hidden;
       box-shadow:0 2px 14px #0002;
-      page-break-inside:avoid !important;
-      break-inside:avoid !important;
     }
 
+    /* ASSIGNMENT: Original solid border unchanged */
     .border-layer {
       position:absolute;
       inset:3.5mm;
@@ -295,6 +288,7 @@
       z-index:5;
     }
 
+    /* LAB REPORT: Black Dotted Border */
     .border-layer.lab {
       inset:3.5mm;
       border:1.5pt dotted #000;
@@ -304,13 +298,13 @@
 
     .watermark {
       position:absolute;
+      height:auto;
       top:190mm;
       left:50%;
       transform:translate(-50%,-50%);
       pointer-events:none;
       z-index:0;
       object-fit:contain;
-      display:block;
     }
 
     .watermark-text { display:none; }
@@ -326,6 +320,7 @@
 
     #layout-assign-top, #layout-lab-top { position:static; }
 
+    /* ASSIGNMENT */
     .uni-name {
       position:absolute;
       top:20mm;
@@ -342,23 +337,15 @@
       top:53mm;
       left:50%;
       transform:translateX(-50%);
-      width:73.914mm;
-      height:61.214mm;
-      display:flex;
-      align-items:center;
-      justify-content:center;
     }
 
+    /* Logo: 2.91 x 2.41 inches */
     .logo-area img {
       display:block;
-      width:100%;
-      height:100%;
-      max-width:100%;
-      max-height:100%;
+      width:73.914mm;
+      height:61.214mm;
       object-fit:contain;
-      object-position:center;
-      flex-shrink:0;
-      margin:0 auto;
+      margin:0;
     }
 
     .dept-name {
@@ -417,6 +404,7 @@
 
     .spacer { display:none; }
 
+    /* Submission box: 18pt normal */
     .submission-block {
       position:absolute;
       top:228mm;
@@ -464,47 +452,34 @@
       font:bold 20pt/1.2 "Times New Roman",serif;
     }
 
+    /* ASSIGNMENT WATERMARK: 7.25 x 5.77 inches */
     #pdf-content:not(.lab-layout) .watermark {
       width:184.15mm;
       height:146.558mm;
-      max-width:184.15mm;
-      max-height:146.558mm;
       top:191mm;
       opacity:.10;
-      object-fit:contain;
-      object-position:center;
     }
 
+    /* LAB REPORT WATERMARK: 6.17 x 4.93 inches */
     #pdf-content.lab-layout .watermark {
       width:156.718mm;
       height:125.222mm;
-      max-width:156.718mm;
-      max-height:125.222mm;
       top:190mm;
       opacity:.09;
-      object-fit:contain;
-      object-position:center;
     }
 
-    #pdf-content.lab-layout .logo-area {
-      top:17mm;
-    }
+    /* LAB REPORT LAYOUT */
+    #pdf-content.lab-layout .logo-area { top:17mm; }
 
     #pdf-content.lab-layout .logo-area img {
-      width:100%;
-      height:100%;
-      max-width:100%;
-      max-height:100%;
-      object-fit:contain;
-      object-position:center;
+      width:73.914mm;
+      height:61.214mm;
     }
 
-    #pdf-content.lab-layout .uni-name br {
-      display:none;
-    }
+    #pdf-content.lab-layout .uni-name br { display:none; }
 
     #pdf-content.lab-layout .uni-name {
-      top:84mm;
+      top:81mm;
       left:8mm;
       right:8mm;
       white-space:nowrap;
@@ -513,7 +488,7 @@
     }
 
     #pdf-content.lab-layout .dept-name {
-      top:103mm;
+      top:105mm;
       left:8mm;
       right:8mm;
       color:#843C0C;
@@ -522,25 +497,23 @@
     }
 
     #pdf-content.lab-layout .doc-type {
-      top:119mm;
+      top:121mm;
       left:8mm;
       right:8mm;
       font:bold 20pt/1.2 "Times New Roman",serif;
     }
 
     #pdf-content.lab-layout .course-info {
-      top:136mm;
+      top:137mm;
       left:14mm;
       right:14mm;
       font:bold 18pt/1.4 "Times New Roman",serif;
     }
 
-    #pdf-content.lab-layout .course-info p {
-      margin:0 0 3mm;
-    }
+    #pdf-content.lab-layout .course-info p { margin:0 0 3mm; }
 
     #pdf-content.lab-layout .report-name {
-      top:169mm;
+      top:168mm;
       left:14mm;
       right:14mm;
       font:bold 18pt/1.28 "Times New Roman",serif;
@@ -555,6 +528,7 @@
       text-decoration:underline;
     }
 
+    /* Lab Report information box */
     #pdf-content.lab-layout .submission-block {
       top:244mm;
       left:15mm;
@@ -563,9 +537,7 @@
       border:1pt solid #000;
     }
 
-    #pdf-content.lab-layout .sub-col {
-      padding:1.2mm 5mm;
-    }
+    #pdf-content.lab-layout .sub-col { padding:1.2mm 5mm; }
 
     #pdf-content.lab-layout .sub-col:first-child {
       border-right:1pt solid #000;
@@ -583,9 +555,7 @@
       margin:0;
     }
 
-    #pdf-content.lab-layout .bottom-date {
-      display:none !important;
-    }
+    #pdf-content.lab-layout .bottom-date { display:none !important; }
 
     .hidden { display:none !important; }
 
@@ -611,17 +581,6 @@
       padding:8px 0 22px;
     }
 
-    .developer-credit {
-      margin-top:9px;
-      font-size:14px;
-      color:#46534a;
-    }
-
-    .developer-credit strong {
-      font-weight:800;
-      color:#007A33;
-    }
-
     @media(max-width:900px) {
       .workspace { grid-template-columns:1fr; }
       .form-panel { max-width:none; }
@@ -644,6 +603,20 @@
       .form-grid { grid-template-columns:1fr; }
       .field.full { grid-column:auto; }
       .paper-wrap { justify-content:flex-start; }
+
+      .stats-grid { gap:8px; }
+
+      .stat-card {
+        padding:13px 5px;
+      }
+
+      .stat-number {
+        font-size:21px;
+      }
+
+      .stat-label {
+        font-size:10px;
+      }
     }
   </style>
 </head>
@@ -669,6 +642,24 @@
       <p>Enter your details, check the A4 preview, and download a print-ready PDF.</p>
     </div>
 
+    <!-- PUBLIC STATISTICS -->
+    <section class="stats-grid" aria-label="Website statistics">
+      <div class="stat-card">
+        <div class="stat-number" id="totalVisits">0</div>
+        <div class="stat-label">Total Visits</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-number" id="totalDownloads">0</div>
+        <div class="stat-label">PDF Downloads</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-number" id="totalInstalls">0</div>
+        <div class="stat-label">App Installs</div>
+      </div>
+    </section>
+
     <div class="workspace">
       <section class="panel form-panel">
         <div class="panel-heading">
@@ -682,50 +673,28 @@
 
         <form id="detailsForm" autocomplete="on">
           <div class="form-grid">
-
             <div class="field full">
               <label for="dept">Department</label>
               <select id="dept">
-                <option value="Department of Computer Science and Engineering">Department of Computer Science and Engineering</option>
-                <option value="Department of Electronics and Electrical Engineering">Department of Electronics and Electrical Engineering</option>
-                <option value="Department of Pharmacy">Department of Pharmacy</option>
-                <option value="Department of English">Department of English</option>
-                <option value="Department of Journalism and Media Studies">Department of Journalism and Media Studies</option>
-                <option value="Department of Business Administration">Department of Business Administration</option>
-                <option value="Department of Law">Department of Law</option>
-                <option value="Department of Islamic Studies">Department of Islamic Studies</option>
+                <option>COMPUTER SCIENCE & ENGINEERING</option>
+                <option>ELECTRICAL & ELECTRONIC ENGINEERING</option>
+                <option>BUSINESS ADMINISTRATION</option>
+                <option>ENGLISH</option>
+                <option>LAW</option>
+                <option>PHARMACY</option>
+                <option>CIVIL ENGINEERING</option>
+                <option>ARCHITECTURE</option>
               </select>
             </div>
 
             <div class="field">
-              <label for="docNo" id="docNoLabel">Assignment No.</label>
+              <label for="docNo">Document No.</label>
               <input id="docNo" placeholder="01" value="01">
             </div>
 
             <div class="field">
               <label for="date">Submission Date</label>
-
-              <div class="date-picker-wrapper">
-                <input
-                  id="date"
-                  class="date-display"
-                  type="text"
-                  placeholder="DD-MM-YYYY"
-                  readonly
-                  autocomplete="off"
-                  title="Select submission date"
-                >
-
-                <span class="date-picker-icon">▦</span>
-
-                <input
-                  id="datePicker"
-                  class="native-date-picker"
-                  type="date"
-                  tabindex="-1"
-                  aria-hidden="true"
-                >
-              </div>
+              <input id="date" placeholder="e.g. 26-11-2026">
             </div>
 
             <div class="field full">
@@ -740,20 +709,12 @@
 
             <div class="field">
               <label for="batch">Batch</label>
-              <input
-                id="batch"
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                maxlength="3"
-                placeholder="e.g. 62"
-                autocomplete="off"
-              >
+              <input id="batch" inputmode="numeric" placeholder="e.g. 62">
             </div>
 
             <div class="field full">
-              <label for="reportName" id="nameFieldLabel">Assignment Name</label>
-              <textarea id="reportName" placeholder="Write your assignment name"></textarea>
+              <label for="reportName">Report / Assignment Name</label>
+              <textarea id="reportName" placeholder="Write your topic or experiment name"></textarea>
             </div>
 
             <div class="field">
@@ -773,31 +734,13 @@
 
             <div class="field">
               <label for="teacherDesig">Teacher Designation</label>
-              <select id="teacherDesig">
-                <option value="" disabled selected>Select Qualification</option>
-                <option value="Lecturer">Lecturer</option>
-                <option value="Assistant Professor">Assistant Professor</option>
-                <option value="Associate Professor">Associate Professor</option>
-                <option value="Professor">Professor</option>
-              </select>
+              <input id="teacherDesig" placeholder="e.g. Lecturer">
             </div>
 
             <div class="field full">
               <label for="teacherDept">Teacher Department</label>
-              <select id="teacherDept">
-                <option value="" disabled selected>Select Department</option>
-                <option value="Department of CSE">Department of CSE</option>
-                <option value="Department of EEE">Department of EEE</option>
-                <option value="Department of Pharmacy">Department of Pharmacy</option>
-                <option value="Department of English">Department of English</option>
-                <option value="Department of BJM">Department of BJM</option>
-                <option value="Department of BBA">Department of BBA</option>
-                <option value="Department of Law">Department of Law</option>
-                <option value="Department of Islamic Studies">Department of Islamic Studies</option>
-                <option value="Department of CGED">Department of CGED</option>
-              </select>
+              <input id="teacherDept" placeholder="e.g. Department of CSE, MIU">
             </div>
-
           </div>
 
           <div class="form-actions">
@@ -837,7 +780,7 @@
               </div>
 
               <div class="dept-name">
-                <span id="p-dept">DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING</span>
+                DEPARTMENT OF <span id="p-dept">COMPUTER SCIENCE & ENGINEERING</span>
               </div>
 
               <div class="doc-type" id="p-doc-type">ASSIGNMENT-01</div>
@@ -848,8 +791,7 @@
               </div>
 
               <div class="report-name">
-                <span id="p-name-label">Assignment Name:</span>
-                <span id="p-report-name"></span>
+                Report Name: <span id="p-report-name"></span>
               </div>
 
               <div class="lab-date hidden" id="p-lab-date">
@@ -884,17 +826,68 @@
     </div>
   </main>
 
-  <footer>
-    <div>MIU Cover Page Generator · Made for Manarat International University students</div>
-    <div class="developer-credit">
-      Developed by <strong>Mehedy Hasan Rifat</strong>
-    </div>
-  </footer>
+  <footer>MIU Cover Page Generator · Made for Manarat International University students</footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
     const $ = (id) => document.getElementById(id);
+
+    // ==========================================
+    // PUBLIC STATISTICS
+    // ==========================================
+
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/stats');
+
+        if (!response.ok) {
+          throw new Error('Could not load statistics');
+        }
+
+        const stats = await response.json();
+
+        $('totalVisits').textContent =
+          Number(stats.visitors || 0).toLocaleString();
+
+        $('totalDownloads').textContent =
+          Number(stats.downloads || 0).toLocaleString();
+
+        $('totalInstalls').textContent =
+          Number(stats.installs || 0).toLocaleString();
+
+      } catch (error) {
+        console.error('Statistics loading failed:', error);
+      }
+    }
+
+    async function recordStat(type) {
+      try {
+        const response = await fetch('/api/stats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ type })
+        });
+
+        if (!response.ok) {
+          throw new Error('Could not update statistics');
+        }
+
+        await loadStats();
+
+      } catch (error) {
+        console.error('Statistics update failed:', error);
+      }
+    }
+
+    // Count each page visit
+    recordStat('visitors');
+
+    // ==========================================
+    // EXISTING APPLICATION
+    // ==========================================
 
     const fields = [
       'dept',
@@ -926,99 +919,30 @@
       }, 2600);
     }
 
-    // Format calendar date as DD-MM-YYYY
-    function formatDate(dateValue) {
-      if (!dateValue) return '';
-
-      const [year, month, day] = dateValue.split('-');
-
-      if (!year || !month || !day) return '';
-
-      return `${day}-${month}-${year}`;
-    }
-
-    // Convert DD-MM-YYYY into YYYY-MM-DD
-    function dateToISO(dateValue) {
-      if (!dateValue) return '';
-
-      const parts = dateValue.split('-');
-
-      if (parts.length !== 3) return '';
-
-      const [day, month, year] = parts;
-
-      if (!day || !month || !year) return '';
-
-      return `${year}-${month}-${day}`;
-    }
-
-    // Allow digits only in Batch field
-    function sanitizeBatch() {
-      $('batch').value = $('batch').value.replace(/[^0-9]/g, '').slice(0, 3);
-    }
-
-    // Open native date picker
-    function openDatePicker() {
-      const picker = $('datePicker');
-
-      try {
-        if (typeof picker.showPicker === 'function') {
-          picker.showPicker();
-        } else {
-          picker.focus();
-          picker.click();
-        }
-      } catch (error) {
-        picker.focus();
-        picker.click();
-      }
-    }
-
     function setType(type) {
       currentType = type;
 
-      const isAssignment = type === 'assignment';
+      $('btn-assign').classList.toggle('active', type === 'assignment');
+      $('btn-lab').classList.toggle('active', type === 'lab');
 
-      $('btn-assign').classList.toggle('active', isAssignment);
-      $('btn-lab').classList.toggle('active', !isAssignment);
+      $('layout-assign-top').classList.toggle('hidden', type !== 'assignment');
+      $('layout-lab-top').classList.toggle('hidden', type !== 'lab');
 
-      $('layout-assign-top').classList.toggle('hidden', !isAssignment);
-      $('layout-lab-top').classList.toggle('hidden', isAssignment);
+      $('p-lab-date').classList.toggle('hidden', type !== 'lab');
+      $('p-bottom-date').classList.toggle('hidden', type !== 'assignment');
 
-      $('p-lab-date').classList.toggle('hidden', isAssignment);
-      $('p-bottom-date').classList.toggle('hidden', !isAssignment);
-
-      $('border-layer').classList.toggle('lab', !isAssignment);
-      $('pdf-content').classList.toggle('lab-layout', !isAssignment);
-
-      $('docNoLabel').textContent = isAssignment
-        ? 'Assignment No.'
-        : 'Report No.';
-
-      $('nameFieldLabel').textContent = isAssignment
-        ? 'Assignment Name'
-        : 'Report Name';
-
-      $('reportName').placeholder = isAssignment
-        ? 'Write your assignment name'
-        : 'Write your report name';
-
-      $('p-name-label').textContent = isAssignment
-        ? 'Assignment Name: '
-        : 'Report Name: ';
+      $('border-layer').classList.toggle('lab', type === 'lab');
+      $('pdf-content').classList.toggle('lab-layout', type === 'lab');
 
       updatePreview();
     }
 
     function updatePreview() {
-      sanitizeBatch();
-
       const v = Object.fromEntries(
         fields.map(id => [id, $(id).value.trim()])
       );
 
-      $('p-dept').textContent =
-        v.dept || 'Department of Computer Science and Engineering';
+      $('p-dept').innerHTML = v.dept.replace(' & ', ' &amp;<br>');
 
       $('p-doc-type').textContent =
         (currentType === 'assignment' ? 'ASSIGNMENT-' : 'LAB REPORT-') +
@@ -1056,27 +980,7 @@
         if (saved && saved.values) {
           fields.forEach(id => {
             if (saved.values[id] !== undefined) {
-              let value = saved.values[id];
-
-              if (id === 'date') {
-                if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-                  value = formatDate(value);
-                }
-
-                $('date').value = value;
-                $('datePicker').value = dateToISO(value);
-
-              } else if ($(id).tagName === 'SELECT') {
-                const optionExists = Array.from($(id).options)
-                  .some(option => option.value === value);
-
-                if (optionExists) {
-                  $(id).value = value;
-                }
-
-              } else {
-                $(id).value = value;
-              }
+              $(id).value = saved.values[id];
             }
           });
 
@@ -1088,58 +992,11 @@
         console.warn('Could not restore saved form data', e);
       }
 
-      sanitizeBatch();
       updatePreview();
     }
 
-    // Wait for image loading
-    async function waitForImages(element) {
-      const images = Array.from(element.querySelectorAll('img'));
-
-      await Promise.all(
-        images.map(async (img) => {
-          if (!img.complete) {
-            await new Promise((resolve) => {
-              img.onload = resolve;
-              img.onerror = resolve;
-            });
-          }
-
-          if (img.decode) {
-            await img.decode().catch(() => {});
-          }
-
-          if (!img.naturalWidth || !img.naturalHeight) {
-            throw new Error('Image failed to load: ' + img.src);
-          }
-        })
-      );
-
-      return images;
-    }
-
-    // Calculate image dimensions without distortion
-    function fitImage(naturalWidth, naturalHeight, maxWidth, maxHeight) {
-      const ratio = naturalWidth / naturalHeight;
-
-      let width = maxWidth;
-      let height = width / ratio;
-
-      if (height > maxHeight) {
-        height = maxHeight;
-        width = height * ratio;
-      }
-
-      return { width, height };
-    }
-
-    // PDF DOWNLOAD - SINGLE A4 PAGE
     async function downloadPDF() {
-      if (
-        typeof html2canvas === 'undefined' ||
-        !window.jspdf ||
-        !window.jspdf.jsPDF
-      ) {
+      if (typeof html2pdf === 'undefined') {
         toast('PDF library is unavailable. Connect to the internet and reload.');
         return;
       }
@@ -1153,233 +1010,45 @@
       const fileName =
         `${studentId}_${currentType === 'assignment' ? 'Assignment' : 'LabReport'}.pdf`;
 
-      const downloadBtn = $('downloadBtn');
-
-      downloadBtn.disabled = true;
-      downloadBtn.textContent = 'Preparing PDF...';
-
-      let clone = null;
-      let wrapper = null;
+      $('downloadBtn').disabled = true;
+      $('downloadBtn').textContent = 'Preparing PDF...';
 
       try {
-        // Wait for all original images
-        const originalImages = await waitForImages(element);
-
-        // Create a separate PDF rendering copy
-        wrapper = document.createElement('div');
-
-        wrapper.style.position = 'fixed';
-        wrapper.style.left = '0';
-        wrapper.style.top = '0';
-        wrapper.style.width = '210mm';
-        wrapper.style.height = '297mm';
-        wrapper.style.overflow = 'hidden';
-        wrapper.style.zIndex = '-9999';
-        wrapper.style.pointerEvents = 'none';
-        wrapper.style.background = '#ffffff';
-
-        clone = element.cloneNode(true);
-
-        clone.style.position = 'absolute';
-        clone.style.left = '0';
-        clone.style.top = '0';
-        clone.style.width = '210mm';
-        clone.style.height = '297mm';
-        clone.style.minWidth = '210mm';
-        clone.style.maxWidth = '210mm';
-        clone.style.minHeight = '297mm';
-        clone.style.maxHeight = '297mm';
-        clone.style.margin = '0';
-        clone.style.transform = 'none';
-        clone.style.boxShadow = 'none';
-        clone.style.overflow = 'hidden';
-        clone.style.flex = 'none';
-
-        wrapper.appendChild(clone);
-        document.body.appendChild(wrapper);
-
-        // Wait for browser layout
-        await new Promise(resolve => requestAnimationFrame(() => {
-          requestAnimationFrame(resolve);
-        }));
-
-        // Replace logo and watermark images with correctly sized canvases
-        const clonedImages = Array.from(clone.querySelectorAll('img'));
-
-        clonedImages.forEach((img, index) => {
-          const original = originalImages[index];
-
-          if (!original) return;
-
-          const naturalWidth = original.naturalWidth;
-          const naturalHeight = original.naturalHeight;
-
-          if (!naturalWidth || !naturalHeight) return;
-
-          let maxWidth;
-          let maxHeight;
-
-          if (img.classList.contains('watermark')) {
-            maxWidth = currentType === 'assignment'
-              ? 184.15
-              : 156.718;
-
-            maxHeight = currentType === 'assignment'
-              ? 146.558
-              : 125.222;
-
-          } else if (img.closest('.logo-area')) {
-            maxWidth = 73.914;
-            maxHeight = 61.214;
-
-          } else {
-            return;
+        await html2pdf().set({
+          margin:0,
+          filename:fileName,
+          image:{type:'jpeg',quality:0.98},
+          html2canvas:{
+            scale:2,
+            useCORS:true,
+            backgroundColor:'#ffffff'
+          },
+          jsPDF:{
+            unit:'mm',
+            format:'a4',
+            orientation:'portrait'
           }
-
-          const fitted = fitImage(
-            naturalWidth,
-            naturalHeight,
-            maxWidth,
-            maxHeight
-          );
-
-          // Use high-resolution canvas for the image
-          const imageCanvas = document.createElement('canvas');
-
-          imageCanvas.width = naturalWidth;
-          imageCanvas.height = naturalHeight;
-
-          const context = imageCanvas.getContext('2d');
-
-          context.drawImage(
-            original,
-            0,
-            0,
-            naturalWidth,
-            naturalHeight
-          );
-
-          imageCanvas.className = img.className;
-          imageCanvas.style.cssText = img.style.cssText;
-
-          imageCanvas.style.setProperty(
-            'width',
-            `${fitted.width}mm`,
-            'important'
-          );
-
-          imageCanvas.style.setProperty(
-            'height',
-            `${fitted.height}mm`,
-            'important'
-          );
-
-          imageCanvas.style.setProperty(
-            'max-width',
-            'none',
-            'important'
-          );
-
-          imageCanvas.style.setProperty(
-            'max-height',
-            'none',
-            'important'
-          );
-
-          imageCanvas.style.setProperty(
-            'object-fit',
-            'fill',
-            'important'
-          );
-
-          img.replaceWith(imageCanvas);
-        });
-
-        // Keep the image and page layers in their original positions
-        const canvas = await html2canvas(clone, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: clone.offsetWidth,
-          height: clone.offsetHeight,
-          windowWidth: Math.max(window.innerWidth, clone.offsetWidth),
-          windowHeight: Math.max(window.innerHeight, clone.offsetHeight),
-          scrollX: 0,
-          scrollY: 0
-        });
-
-        // Create one-page A4 PDF
-        const { jsPDF } = window.jspdf;
-
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-          compress: true
-        });
-
-        const imageData = canvas.toDataURL('image/jpeg', 0.98);
-
-        pdf.addImage(
-          imageData,
-          'JPEG',
-          0,
-          0,
-          210,
-          297,
-          undefined,
-          'FAST'
-        );
-
-        pdf.save(fileName);
+        }).from(element).save();
 
         toast('PDF downloaded successfully.');
 
+        // Count successful PDF download
+        recordStat('downloads');
+
       } catch(err) {
-        console.error('PDF generation error:', err);
+        console.error(err);
         toast('PDF could not be generated. Please try again.');
-
       } finally {
-        // Remove temporary PDF rendering copy
-        if (wrapper && wrapper.parentNode) {
-          wrapper.parentNode.removeChild(wrapper);
-        }
-
-        downloadBtn.disabled = false;
-        downloadBtn.textContent = '↓ Download PDF';
+        $('downloadBtn').disabled = false;
+        $('downloadBtn').textContent = '↓ Download PDF';
       }
     }
 
     $('btn-assign').addEventListener('click', () => setType('assignment'));
     $('btn-lab').addEventListener('click', () => setType('lab'));
 
-    $('date').addEventListener('click', openDatePicker);
-
-    $('date').addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openDatePicker();
-      }
-    });
-
-    $('datePicker').addEventListener('change', () => {
-      $('date').value = formatDate($('datePicker').value);
-      updatePreview();
-    });
-
     fields.forEach(id => {
-      if (id === 'date') return;
-
-      $(id).addEventListener('input', () => {
-        if (id === 'batch') {
-          sanitizeBatch();
-        }
-
-        updatePreview();
-      });
-
+      $(id).addEventListener('input', updatePreview);
       $(id).addEventListener('change', updatePreview);
     });
 
@@ -1398,14 +1067,11 @@
         }
       });
 
-      $('datePicker').value = '';
-
       setType('assignment');
       updatePreview();
       toast('Form cleared.');
     });
 
-    // PWA installation
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
@@ -1428,9 +1094,11 @@
     window.addEventListener('appinstalled', () => {
       $('installBtn').hidden = true;
       toast('MIU Cover installed.');
+
+      // Count app installation event
+      recordStat('installs');
     });
 
-    // Service Worker
     if (
       'serviceWorker' in navigator &&
       (location.protocol === 'https:' || location.hostname === 'localhost')
@@ -1442,7 +1110,6 @@
       });
     }
 
-    // Restore saved data
     restoreData();
   </script>
 </body>
