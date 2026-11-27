@@ -98,7 +98,6 @@
     .intro h1 { margin:0 0 5px; font-size:24px; }
     .intro p { margin:0; color:var(--muted); font-size:13px; }
 
-    /* PUBLIC STATISTICS */
     .stats-grid {
       display:grid;
       grid-template-columns:repeat(3,1fr);
@@ -210,7 +209,6 @@
 
     textarea { resize:vertical; min-height:65px; }
 
-    /* DATE PICKER */
     .date-display {
       cursor:pointer;
       background:#fff;
@@ -300,7 +298,6 @@
       box-shadow:0 2px 14px #0002;
     }
 
-    /* ASSIGNMENT: Original solid border unchanged */
     .border-layer {
       position:absolute;
       inset:3.5mm;
@@ -310,7 +307,6 @@
       z-index:5;
     }
 
-    /* LAB REPORT: Black Dotted Border */
     .border-layer.lab {
       inset:3.5mm;
       border:1.5pt dotted #000;
@@ -342,7 +338,6 @@
 
     #layout-assign-top, #layout-lab-top { position:static; }
 
-    /* ASSIGNMENT */
     .uni-name {
       position:absolute;
       top:20mm;
@@ -361,7 +356,6 @@
       transform:translateX(-50%);
     }
 
-    /* Logo: 2.91 x 2.41 inches */
     .logo-area img {
       display:block;
       width:73.914mm;
@@ -426,7 +420,6 @@
 
     .spacer { display:none; }
 
-    /* Submission box: 18pt normal */
     .submission-block {
       position:absolute;
       top:228mm;
@@ -474,7 +467,6 @@
       font:bold 20pt/1.2 "Times New Roman",serif;
     }
 
-    /* ASSIGNMENT WATERMARK: 7.25 x 5.77 inches */
     #pdf-content:not(.lab-layout) .watermark {
       width:184.15mm;
       height:146.558mm;
@@ -482,7 +474,6 @@
       opacity:.10;
     }
 
-    /* LAB REPORT WATERMARK: 6.17 x 4.93 inches */
     #pdf-content.lab-layout .watermark {
       width:156.718mm;
       height:125.222mm;
@@ -490,7 +481,6 @@
       opacity:.09;
     }
 
-    /* LAB REPORT LAYOUT */
     #pdf-content.lab-layout .logo-area { top:17mm; }
 
     #pdf-content.lab-layout .logo-area img {
@@ -550,7 +540,6 @@
       text-decoration:underline;
     }
 
-    /* Lab Report information box */
     #pdf-content.lab-layout .submission-block {
       top:244mm;
       left:15mm;
@@ -664,7 +653,6 @@
       <p>Enter your details, check the A4 preview, and download a print-ready PDF.</p>
     </div>
 
-    <!-- PUBLIC STATISTICS -->
     <section class="stats-grid" aria-label="Website statistics">
       <div class="stat-card">
         <div class="stat-number" id="totalVisits">0</div>
@@ -696,9 +684,8 @@
         <form id="detailsForm" autocomplete="on">
           <div class="form-grid">
 
-            <!-- STUDENT DEPARTMENT -->
             <div class="field full">
-              <label for="dept">Student Department</label>
+              <label for="dept">Department</label>
               <select id="dept">
                 <option value="COMPUTER SCIENCE AND ENGINEERING">Department of Computer Science and Engineering</option>
                 <option value="ELECTRONICS AND ELECTRICAL ENGINEERING">Department of Electronics and Electrical Engineering</option>
@@ -712,11 +699,10 @@
             </div>
 
             <div class="field">
-              <label for="docNo">Document No.</label>
+              <label for="docNo" id="docNoLabel">Assignment No.</label>
               <input id="docNo" placeholder="01" value="01">
             </div>
 
-            <!-- SUBMISSION DATE -->
             <div class="field">
               <label for="date">Submission Date</label>
               <input
@@ -754,7 +740,7 @@
             </div>
 
             <div class="field full">
-              <label for="reportName">Report / Assignment Name</label>
+              <label for="reportName" id="reportNameLabel">Assignment Name</label>
               <textarea id="reportName" placeholder="Write your topic or experiment name"></textarea>
             </div>
 
@@ -773,30 +759,28 @@
               <input id="teacherName" placeholder="Teacher name">
             </div>
 
-            <!-- TEACHER DESIGNATION -->
             <div class="field">
               <label for="teacherDesig">Teacher Designation</label>
               <select id="teacherDesig">
-                <option value="Professor">Professor</option>
-                <option value="Associate Professor">Associate Professor</option>
-                <option value="Assistant Professor">Assistant Professor</option>
+                <option value="">Select Qualification</option>
                 <option value="Lecturer">Lecturer</option>
-                <option value="Assistant Faculty">Assistant Faculty</option>
+                <option value="Assistant Professor">Assistant Professor</option>
+                <option value="Associate Professor">Associate Professor</option>
+                <option value="Professor">Professor</option>
               </select>
             </div>
 
-            <!-- TEACHER DEPARTMENT -->
             <div class="field full">
               <label for="teacherDept">Teacher Department</label>
               <select id="teacherDept">
-                <option value="">Select Teacher Department</option>
+                <option value="">Select Department</option>
                 <option value="Department of CSE">Department of CSE</option>
                 <option value="Department of EEE">Department of EEE</option>
                 <option value="Department of Pharmacy">Department of Pharmacy</option>
                 <option value="Department of English">Department of English</option>
                 <option value="Department of BJM">Department of BJM</option>
                 <option value="Department of BBA">Department of BBA</option>
-                <option value="Department of LLB">Department of LLB</option>
+                <option value="Department of Law">Department of Law</option>
                 <option value="Department of Islamic Studies">Department of Islamic Studies</option>
                 <option value="Department of CGED">Department of CGED</option>
               </select>
@@ -852,7 +836,8 @@
               </div>
 
               <div class="report-name">
-                Report Name: <span id="p-report-name"></span>
+                <span id="p-report-label">Assignment Name:</span>
+                <span id="p-report-name"></span>
               </div>
 
               <div class="lab-date hidden" id="p-lab-date">
@@ -903,7 +888,6 @@
 
       const parts = date.split('-');
 
-      // Convert YYYY-MM-DD to DD-MM-YYYY
       if (parts.length === 3 && parts[0].length === 4) {
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
@@ -916,12 +900,10 @@
 
       const parts = date.split('-');
 
-      // Already in YYYY-MM-DD format
       if (parts.length === 3 && parts[0].length === 4) {
         return date;
       }
 
-      // Convert DD-MM-YYYY to YYYY-MM-DD
       if (parts.length === 3 && parts[2].length === 4) {
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
@@ -931,8 +913,6 @@
 
     function openDatePicker() {
       const picker = $('datePicker');
-
-      // Keep the calendar synchronized with the displayed date
       picker.value = dateToISO($('date').value);
 
       try {
@@ -1002,11 +982,10 @@
       }
     }
 
-    // Count each page visit
     recordStat('visitors');
 
     // ==========================================
-    // EXISTING APPLICATION
+    // APPLICATION
     // ==========================================
 
     const fields = [
@@ -1062,6 +1041,16 @@
         fields.map(id => [id, $(id).value.trim()])
       );
 
+      // Dynamic document number and name labels
+      $('docNoLabel').textContent =
+        currentType === 'assignment' ? 'Assignment No.' : 'Report No.';
+
+      $('reportNameLabel').textContent =
+        currentType === 'assignment' ? 'Assignment Name' : 'Report Name';
+
+      $('p-report-label').textContent =
+        currentType === 'assignment' ? 'Assignment Name:' : 'Report Name:';
+
       $('p-dept').innerHTML = v.dept.replace(' & ', ' &amp;<br>');
 
       $('p-doc-type').textContent =
@@ -1104,13 +1093,7 @@
             }
           });
 
-          // Convert any previously saved ISO date to DD-MM-YYYY
           $('date').value = formatDate($('date').value);
-
-          // Keep Professor as the default designation
-          if (!$('teacherDesig').value) {
-            $('teacherDesig').value = 'Professor';
-          }
 
           if (saved.type === 'lab') {
             setType('lab');
@@ -1120,7 +1103,6 @@
         console.warn('Could not restore saved form data', e);
       }
 
-      // Synchronize native calendar with restored date
       $('datePicker').value = dateToISO($('date').value);
 
       updatePreview();
@@ -1163,7 +1145,6 @@
 
         toast('PDF downloaded successfully.');
 
-        // Count successful PDF download
         recordStat('downloads');
 
       } catch(err) {
@@ -1193,14 +1174,11 @@
           $(id).selectedIndex = 0;
         } else if (id === 'docNo') {
           $(id).value = '01';
-        } else if (id === 'teacherDesig') {
-          $(id).value = 'Professor';
         } else {
           $(id).value = '';
         }
       });
 
-      // Clear the native calendar too
       $('datePicker').value = '';
 
       setType('assignment');
@@ -1231,7 +1209,6 @@
       $('installBtn').hidden = true;
       toast('MIU Cover installed.');
 
-      // Count app installation event
       recordStat('installs');
     });
 
