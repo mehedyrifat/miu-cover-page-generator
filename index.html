@@ -10,14 +10,20 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="MIU Cover">
+
   <title>MIU Cover Page Generator</title>
+
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icon-192.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- PDF Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root {
@@ -221,9 +227,7 @@
       background:#fff;
     }
 
-    .date-display::placeholder {
-      color:#8a958d;
-    }
+    .date-display::placeholder { color:#8a958d; }
 
     .calendar-btn {
       position:absolute;
@@ -240,9 +244,7 @@
       cursor:pointer;
     }
 
-    .calendar-btn:hover {
-      color:var(--green-dark);
-    }
+    .calendar-btn:hover { color:var(--green-dark); }
 
     .native-date-picker {
       position:fixed;
@@ -501,7 +503,7 @@
       opacity:.10;
     }
 
-    /* Lab Report watermark remains unchanged */
+    /* Lab Report watermark */
     #pdf-content.lab-layout .watermark {
       width:156.718mm;
       height:125.222mm;
@@ -657,17 +659,11 @@
 
       .stats-grid { gap:8px; }
 
-      .stat-card {
-        padding:13px 5px;
-      }
+      .stat-card { padding:13px 5px; }
 
-      .stat-number {
-        font-size:21px;
-      }
+      .stat-number { font-size:21px; }
 
-      .stat-label {
-        font-size:10px;
-      }
+      .stat-label { font-size:10px; }
     }
   </style>
 </head>
@@ -1011,7 +1007,9 @@
 
     async function loadStats() {
       try {
-        const response = await fetch('/api/stats');
+        const response = await fetch('/api/stats', {
+          cache: 'no-store'
+        });
 
         if (!response.ok) {
           throw new Error('Could not load statistics');
@@ -1055,6 +1053,7 @@
     }
 
     recordStat('visitors');
+    loadStats();
 
     // ==========================================
     // APPLICATION
@@ -1189,7 +1188,11 @@
     // ==========================================
 
     async function downloadPDF() {
-      if (typeof html2pdf === 'undefined') {
+      if (
+        typeof window.html2canvas !== 'function' ||
+        !window.jspdf ||
+        typeof window.jspdf.jsPDF !== 'function'
+      ) {
         toast('PDF library is unavailable. Connect to the internet and reload.');
         return;
       }
@@ -1209,21 +1212,19 @@
       downloadBtn.textContent = 'Preparing PDF...';
 
       try {
-        // Wait until all images are loaded
+        // Wait for all images to load
         const images = Array.from(element.querySelectorAll('img'));
 
-        await Promise.all(
-          images.map(img => {
-            if (img.complete && img.naturalWidth > 0) {
-              return Promise.resolve();
-            }
+        await Promise.all(images.map(img => {
+          if (img.complete && img.naturalWidth > 0) {
+            return Promise.resolve();
+          }
 
-            return new Promise(resolve => {
-              img.onload = resolve;
-              img.onerror = resolve;
-            });
-          })
-        );
+          return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        }));
 
         // Wait for fonts
         if (document.fonts && document.fonts.ready) {
@@ -1237,51 +1238,54 @@
           });
         });
 
-        // Capture the A4 cover page and export it as one page
-        await html2pdf()
-          .set({
-            margin: 0,
-            filename: fileName,
+        // Get exact A4 element dimensions
+        const rect = element.getBoundingClientRect();
 
-            image: {
-              type: 'jpeg',
-              quality: 1
-            },
+        // Capture the complete cover page
+        const canvas = await window.html2canvas(element, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: false,
+          width: rect.width,
+          height: rect.height,
+          windowWidth: Math.ceil(rect.width),
+          windowHeight: Math.ceil(rect.height),
+          scrollX: 0,
+          scrollY: 0,
+          logging: false
+        });
 
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              allowTaint: false,
-              backgroundColor: '#ffffff',
-              scrollX: 0,
-              scrollY: 0,
-              logging: false
-            },
+        const { jsPDF } = window.jspdf;
 
-            jsPDF: {
-              unit: 'mm',
-              format: 'a4',
-              orientation: 'portrait',
-              compress: true
-            },
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
 
-            pagebreak: {
-              mode: ['avoid-all'],
-              avoid: ['.border-layer', '.watermark', '.content-wrapper']
-            }
-          })
-          .from(element)
-          .toCanvas()
-          .toPdf()
-          .save();
+        const imageData = canvas.toDataURL('image/jpeg', 0.98);
+
+        // Fit the complete captured cover into one A4 page
+        pdf.addImage(
+          imageData,
+          'JPEG',
+          0,
+          0,
+          210,
+          297,
+          undefined,
+          'FAST'
+        );
+
+        pdf.save(fileName);
 
         toast('PDF downloaded successfully.');
-
         recordStat('downloads');
 
       } catch(err) {
         console.error('PDF generation error:', err);
-
         toast('PDF could not be generated. Please try again.');
 
       } finally {
@@ -1320,6 +1324,10 @@
       toast('Form cleared.');
     });
 
+    // ==========================================
+    // PWA INSTALLATION
+    // ==========================================
+
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
@@ -1346,6 +1354,10 @@
       recordStat('installs');
     });
 
+    // ==========================================
+    // SERVICE WORKER
+    // ==========================================
+
     if (
       'serviceWorker' in navigator &&
       (location.protocol === 'https:' || location.hostname === 'localhost')
@@ -1356,6 +1368,10 @@
           .catch(err => console.error('Service worker registration failed:', err));
       });
     }
+
+    // ==========================================
+    // INITIALIZE APP
+    // ==========================================
 
     restoreData();
   </script>
