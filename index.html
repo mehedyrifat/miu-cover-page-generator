@@ -658,11 +658,8 @@
       .paper-wrap { justify-content:flex-start; }
 
       .stats-grid { gap:8px; }
-
       .stat-card { padding:13px 5px; }
-
       .stat-number { font-size:21px; }
-
       .stat-label { font-size:10px; }
     }
   </style>
@@ -1184,6 +1181,24 @@
     }
 
     // ==========================================
+    // PDF IMAGE ASPECT RATIO FUNCTION
+    // ==========================================
+
+    function fitImage(naturalWidth, naturalHeight, maxWidth, maxHeight) {
+      const ratio = naturalWidth / naturalHeight;
+
+      let width = maxWidth;
+      let height = width / ratio;
+
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = height * ratio;
+      }
+
+      return { width, height };
+    }
+
+    // ==========================================
     // PDF DOWNLOAD - SINGLE A4 PAGE
     // ==========================================
 
@@ -1211,6 +1226,8 @@
       downloadBtn.disabled = true;
       downloadBtn.textContent = 'Preparing PDF...';
 
+      let wrapper = null;
+
       try {
         // Wait for all images to load
         const images = Array.from(element.querySelectorAll('img'));
@@ -1231,6 +1248,105 @@
           await document.fonts.ready;
         }
 
+        // Create an off-screen A4 wrapper
+        wrapper = document.createElement('div');
+
+        wrapper.style.cssText = `
+          position:fixed;
+          left:-10000px;
+          top:0;
+          width:210mm;
+          height:297mm;
+          overflow:hidden;
+          background:#ffffff;
+          z-index:9999;
+          pointer-events:none;
+        `;
+
+        const clone = element.cloneNode(true);
+
+        clone.style.width = '210mm';
+        clone.style.height = '297mm';
+        clone.style.minWidth = '210mm';
+        clone.style.minHeight = '297mm';
+        clone.style.maxWidth = '210mm';
+        clone.style.maxHeight = '297mm';
+        clone.style.margin = '0';
+        clone.style.boxShadow = 'none';
+        clone.style.overflow = 'hidden';
+
+        wrapper.appendChild(clone);
+        document.body.appendChild(wrapper);
+
+        // Convert images to canvases without stretching
+        const originalImages = Array.from(element.querySelectorAll('img'));
+        const clonedImages = Array.from(clone.querySelectorAll('img'));
+
+        for (let i = 0; i < originalImages.length; i++) {
+          const original = originalImages[i];
+          const cloned = clonedImages[i];
+
+          if (!original.naturalWidth || !original.naturalHeight) {
+            continue;
+          }
+
+          let maxWidth;
+          let maxHeight;
+
+          if (original.classList.contains('watermark')) {
+            if (currentType === 'lab') {
+              maxWidth = 156.718;
+              maxHeight = 125.222;
+            } else {
+              maxWidth = 184.15;
+              maxHeight = 146.558;
+            }
+          } else if (original.closest('.logo-area')) {
+            maxWidth = 73.914;
+            maxHeight = 61.214;
+          } else {
+            continue;
+          }
+
+          const fitted = fitImage(
+            original.naturalWidth,
+            original.naturalHeight,
+            maxWidth,
+            maxHeight
+          );
+
+          const imageCanvas = document.createElement('canvas');
+
+          imageCanvas.width = original.naturalWidth;
+          imageCanvas.height = original.naturalHeight;
+
+          const context = imageCanvas.getContext('2d');
+
+          context.drawImage(
+            original,
+            0,
+            0,
+            original.naturalWidth,
+            original.naturalHeight
+          );
+
+          imageCanvas.className = cloned.className;
+
+          imageCanvas.style.cssText = cloned.style.cssText;
+
+          imageCanvas.style.width = `${fitted.width}mm`;
+          imageCanvas.style.height = `${fitted.height}mm`;
+          imageCanvas.style.maxWidth = 'none';
+          imageCanvas.style.maxHeight = 'none';
+
+          if (original.closest('.logo-area')) {
+            imageCanvas.style.display = 'block';
+            imageCanvas.style.margin = '0';
+          }
+
+          cloned.replaceWith(imageCanvas);
+        }
+
         // Wait for browser rendering
         await new Promise(resolve => {
           requestAnimationFrame(() => {
@@ -1238,36 +1354,32 @@
           });
         });
 
-        // Get exact A4 element dimensions
-        const rect = element.getBoundingClientRect();
-
-        // Capture the complete cover page
-        const canvas = await window.html2canvas(element, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          useCORS: true,
-          allowTaint: false,
-          width: rect.width,
-          height: rect.height,
-          windowWidth: Math.ceil(rect.width),
-          windowHeight: Math.ceil(rect.height),
-          scrollX: 0,
-          scrollY: 0,
-          logging: false
-        });
-
         const { jsPDF } = window.jspdf;
 
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-          compress: true
+        // Capture the complete A4 cover
+        const canvas = await window.html2canvas(clone, {
+          scale:2,
+          backgroundColor:'#ffffff',
+          useCORS:true,
+          allowTaint:false,
+          width:clone.offsetWidth,
+          height:clone.offsetHeight,
+          windowWidth:clone.offsetWidth,
+          windowHeight:clone.offsetHeight,
+          scrollX:0,
+          scrollY:0,
+          logging:false
         });
 
         const imageData = canvas.toDataURL('image/jpeg', 0.98);
 
-        // Fit the complete captured cover into one A4 page
+        const pdf = new jsPDF({
+          orientation:'portrait',
+          unit:'mm',
+          format:'a4',
+          compress:true
+        });
+
         pdf.addImage(
           imageData,
           'JPEG',
@@ -1282,6 +1394,7 @@
         pdf.save(fileName);
 
         toast('PDF downloaded successfully.');
+
         recordStat('downloads');
 
       } catch(err) {
@@ -1289,6 +1402,10 @@
         toast('PDF could not be generated. Please try again.');
 
       } finally {
+        if (wrapper && wrapper.parentNode) {
+          wrapper.parentNode.removeChild(wrapper);
+        }
+
         downloadBtn.disabled = false;
         downloadBtn.textContent = '↓ Download PDF';
       }
