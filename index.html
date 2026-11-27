@@ -1203,8 +1203,10 @@
       const fileName =
         `${studentId}_${currentType === 'assignment' ? 'Assignment' : 'LabReport'}.pdf`;
 
-      $('downloadBtn').disabled = true;
-      $('downloadBtn').textContent = 'Preparing PDF...';
+      const downloadBtn = $('downloadBtn');
+
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = 'Preparing PDF...';
 
       try {
         // Wait until all images are loaded
@@ -1223,19 +1225,19 @@
           })
         );
 
-        // Wait for browser layout and fonts
+        // Wait for fonts
         if (document.fonts && document.fonts.ready) {
           await document.fonts.ready;
         }
 
-        await new Promise(resolve => requestAnimationFrame(() => {
-          requestAnimationFrame(resolve);
-        }));
+        // Wait for browser rendering
+        await new Promise(resolve => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(resolve);
+          });
+        });
 
-        // Capture the exact A4 element dimensions
-        const elementWidth = element.offsetWidth;
-        const elementHeight = element.offsetHeight;
-
+        // Capture the A4 cover page and export it as one page
         await html2pdf()
           .set({
             margin: 0,
@@ -1243,17 +1245,14 @@
 
             image: {
               type: 'jpeg',
-              quality: 0.98
+              quality: 1
             },
 
             html2canvas: {
               scale: 2,
               useCORS: true,
+              allowTaint: false,
               backgroundColor: '#ffffff',
-              width: elementWidth,
-              height: elementHeight,
-              windowWidth: elementWidth,
-              windowHeight: elementHeight,
               scrollX: 0,
               scrollY: 0,
               logging: false
@@ -1267,37 +1266,27 @@
             },
 
             pagebreak: {
-              mode: []
+              mode: ['avoid-all'],
+              avoid: ['.border-layer', '.watermark', '.content-wrapper']
             }
           })
           .from(element)
+          .toCanvas()
           .toPdf()
-          .get('pdf')
-          .then(pdf => {
-            // Force the captured A4 canvas onto one A4 PDF page
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-
-            const imageData = pdf.internal.pages[1];
-
-            if (pdf.internal.getNumberOfPages() > 1) {
-              while (pdf.internal.getNumberOfPages() > 1) {
-                pdf.deletePage(pdf.internal.getNumberOfPages());
-              }
-            }
-          })
           .save();
 
         toast('PDF downloaded successfully.');
+
         recordStat('downloads');
 
       } catch(err) {
-        console.error(err);
+        console.error('PDF generation error:', err);
+
         toast('PDF could not be generated. Please try again.');
 
       } finally {
-        $('downloadBtn').disabled = false;
-        $('downloadBtn').textContent = '↓ Download PDF';
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = '↓ Download PDF';
       }
     }
 
