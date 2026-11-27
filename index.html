@@ -209,13 +209,41 @@
 
     textarea { resize:vertical; min-height:65px; }
 
+    /* DATE FIELD WITH CALENDAR ICON */
+
+    .date-input-wrapper {
+      position:relative;
+      width:100%;
+    }
+
     .date-display {
+      width:100%;
+      padding-right:42px;
       cursor:pointer;
       background:#fff;
     }
 
     .date-display::placeholder {
       color:#8a958d;
+    }
+
+    .calendar-btn {
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      border:none;
+      background:transparent;
+      color:var(--green);
+      padding:5px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+
+    .calendar-btn:hover {
+      color:var(--green-dark);
     }
 
     .native-date-picker {
@@ -687,6 +715,7 @@
             <div class="field full">
               <label for="dept">Department</label>
               <select id="dept">
+                <option value="" disabled selected>Select Your Department</option>
                 <option value="COMPUTER SCIENCE AND ENGINEERING">Department of Computer Science and Engineering</option>
                 <option value="ELECTRONICS AND ELECTRICAL ENGINEERING">Department of Electronics and Electrical Engineering</option>
                 <option value="PHARMACY">Department of Pharmacy</option>
@@ -705,15 +734,40 @@
 
             <div class="field">
               <label for="date">Submission Date</label>
-              <input
-                id="date"
-                class="date-display"
-                type="text"
-                placeholder="DD-MM-YYYY"
-                readonly
-                autocomplete="off"
-                title="Select submission date"
-              >
+
+              <div class="date-input-wrapper">
+                <input
+                  id="date"
+                  class="date-display"
+                  type="text"
+                  placeholder="DD-MM-YYYY"
+                  readonly
+                  autocomplete="off"
+                  title="Select submission date"
+                >
+
+                <button
+                  type="button"
+                  class="calendar-btn"
+                  id="calendarBtn"
+                  aria-label="Choose submission date"
+                  title="Choose submission date"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="19"
+                    height="19"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                    <path d="M16 3v4M8 3v4M3 11h18"></path>
+                  </svg>
+                </button>
+              </div>
 
               <input
                 id="datePicker"
@@ -927,6 +981,7 @@
     }
 
     $('date').addEventListener('click', openDatePicker);
+    $('calendarBtn').addEventListener('click', openDatePicker);
 
     $('datePicker').addEventListener('change', () => {
       $('date').value = formatDate($('datePicker').value);
@@ -1175,7 +1230,7 @@
       if (!confirm('Clear all entered details?')) return;
 
       fields.forEach(id => {
-        if (id === 'dept') {
+        if (id === 'dept' || id === 'teacherDesig' || id === 'teacherDept') {
           $(id).selectedIndex = 0;
         } else if (id === 'docNo') {
           $(id).value = '01';
