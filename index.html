@@ -741,7 +741,7 @@
 
             <div class="field full">
               <label for="reportName" id="reportNameLabel">Assignment Name</label>
-              <textarea id="reportName" placeholder="Write your topic or experiment name"></textarea>
+              <textarea id="reportName" placeholder="Write your assignment name"></textarea>
             </div>
 
             <div class="field">
@@ -762,7 +762,7 @@
             <div class="field">
               <label for="teacherDesig">Teacher Designation</label>
               <select id="teacherDesig">
-                <option value="">Select Qualification</option>
+                <option value="" disabled selected>Select Qualification</option>
                 <option value="Lecturer">Lecturer</option>
                 <option value="Assistant Professor">Assistant Professor</option>
                 <option value="Associate Professor">Associate Professor</option>
@@ -773,7 +773,7 @@
             <div class="field full">
               <label for="teacherDept">Teacher Department</label>
               <select id="teacherDept">
-                <option value="">Select Department</option>
+                <option value="" disabled selected>Select Department</option>
                 <option value="Department of CSE">Department of CSE</option>
                 <option value="Department of EEE">Department of EEE</option>
                 <option value="Department of Pharmacy">Department of Pharmacy</option>
@@ -1047,6 +1047,11 @@
 
       $('reportNameLabel').textContent =
         currentType === 'assignment' ? 'Assignment Name' : 'Report Name';
+
+      $('reportName').placeholder =
+        currentType === 'assignment'
+          ? 'Write your assignment name'
+          : 'Write your report name';
 
       $('p-report-label').textContent =
         currentType === 'assignment' ? 'Assignment Name:' : 'Report Name:';
