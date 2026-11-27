@@ -209,8 +209,6 @@
 
     textarea { resize:vertical; min-height:65px; }
 
-    /* DATE FIELD WITH CALENDAR ICON */
-
     .date-input-wrapper {
       position:relative;
       width:100%;
@@ -620,6 +618,18 @@
       padding:8px 0 22px;
     }
 
+    .developer-credit {
+      margin-top:8px;
+      line-height:1.7;
+      font-size:11px;
+      color:#778078;
+    }
+
+    .developer-credit strong {
+      font-weight:800;
+      color:#46534a;
+    }
+
     @media(max-width:900px) {
       .workspace { grid-template-columns:1fr; }
       .form-panel { max-width:none; }
@@ -926,7 +936,12 @@
     </div>
   </main>
 
-  <footer>MIU Cover Page Generator · Made for Manarat International University students</footer>
+  <footer>
+    MIU Cover Page Generator · Made for Manarat International University students
+    <div class="developer-credit">
+      Developed by <strong>Mehedy Hasan Rifat</strong>
+    </div>
+  </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -1096,7 +1111,6 @@
         fields.map(id => [id, $(id).value.trim()])
       );
 
-      // Dynamic document number and name labels
       $('docNoLabel').textContent =
         currentType === 'assignment' ? 'Assignment No.' : 'Report No.';
 
