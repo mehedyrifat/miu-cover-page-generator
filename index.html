@@ -1184,6 +1184,10 @@
       updatePreview();
     }
 
+    // ==========================================
+    // PDF DOWNLOAD - SINGLE A4 PAGE
+    // ==========================================
+
     async function downloadPDF() {
       if (typeof html2pdf === 'undefined') {
         toast('PDF library is unavailable. Connect to the internet and reload.');
@@ -1203,29 +1207,94 @@
       $('downloadBtn').textContent = 'Preparing PDF...';
 
       try {
-        await html2pdf().set({
-          margin:0,
-          filename:fileName,
-          image:{type:'jpeg',quality:0.98},
-          html2canvas:{
-            scale:2,
-            useCORS:true,
-            backgroundColor:'#ffffff'
-          },
-          jsPDF:{
-            unit:'mm',
-            format:'a4',
-            orientation:'portrait'
-          }
-        }).from(element).save();
+        // Wait until all images are loaded
+        const images = Array.from(element.querySelectorAll('img'));
+
+        await Promise.all(
+          images.map(img => {
+            if (img.complete && img.naturalWidth > 0) {
+              return Promise.resolve();
+            }
+
+            return new Promise(resolve => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          })
+        );
+
+        // Wait for browser layout and fonts
+        if (document.fonts && document.fonts.ready) {
+          await document.fonts.ready;
+        }
+
+        await new Promise(resolve => requestAnimationFrame(() => {
+          requestAnimationFrame(resolve);
+        }));
+
+        // Capture the exact A4 element dimensions
+        const elementWidth = element.offsetWidth;
+        const elementHeight = element.offsetHeight;
+
+        await html2pdf()
+          .set({
+            margin: 0,
+            filename: fileName,
+
+            image: {
+              type: 'jpeg',
+              quality: 0.98
+            },
+
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: '#ffffff',
+              width: elementWidth,
+              height: elementHeight,
+              windowWidth: elementWidth,
+              windowHeight: elementHeight,
+              scrollX: 0,
+              scrollY: 0,
+              logging: false
+            },
+
+            jsPDF: {
+              unit: 'mm',
+              format: 'a4',
+              orientation: 'portrait',
+              compress: true
+            },
+
+            pagebreak: {
+              mode: []
+            }
+          })
+          .from(element)
+          .toPdf()
+          .get('pdf')
+          .then(pdf => {
+            // Force the captured A4 canvas onto one A4 PDF page
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+
+            const imageData = pdf.internal.pages[1];
+
+            if (pdf.internal.getNumberOfPages() > 1) {
+              while (pdf.internal.getNumberOfPages() > 1) {
+                pdf.deletePage(pdf.internal.getNumberOfPages());
+              }
+            }
+          })
+          .save();
 
         toast('PDF downloaded successfully.');
-
         recordStat('downloads');
 
       } catch(err) {
         console.error(err);
         toast('PDF could not be generated. Please try again.');
+
       } finally {
         $('downloadBtn').disabled = false;
         $('downloadBtn').textContent = '↓ Download PDF';
