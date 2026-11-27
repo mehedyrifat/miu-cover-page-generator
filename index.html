@@ -673,17 +673,19 @@
 
         <form id="detailsForm" autocomplete="on">
           <div class="form-grid">
+
+            <!-- STUDENT DEPARTMENT -->
             <div class="field full">
-              <label for="dept">Department</label>
+              <label for="dept">Student Department</label>
               <select id="dept">
-                <option>COMPUTER SCIENCE & ENGINEERING</option>
-                <option>ELECTRICAL & ELECTRONIC ENGINEERING</option>
-                <option>BUSINESS ADMINISTRATION</option>
-                <option>ENGLISH</option>
-                <option>LAW</option>
-                <option>PHARMACY</option>
-                <option>CIVIL ENGINEERING</option>
-                <option>ARCHITECTURE</option>
+                <option value="COMPUTER SCIENCE AND ENGINEERING">Department of Computer Science and Engineering</option>
+                <option value="ELECTRONICS AND ELECTRICAL ENGINEERING">Department of Electronics and Electrical Engineering</option>
+                <option value="PHARMACY">Department of Pharmacy</option>
+                <option value="ENGLISH">Department of English</option>
+                <option value="JOURNALISM AND MEDIA STUDIES">Department of Journalism and Media Studies</option>
+                <option value="BUSINESS ADMINISTRATION">Department of Business Administration</option>
+                <option value="LAW">Department of Law</option>
+                <option value="ISLAMIC STUDIES">Department of Islamic Studies</option>
               </select>
             </div>
 
@@ -732,15 +734,36 @@
               <input id="teacherName" placeholder="Teacher name">
             </div>
 
+            <!-- TEACHER DESIGNATION -->
             <div class="field">
               <label for="teacherDesig">Teacher Designation</label>
-              <input id="teacherDesig" placeholder="e.g. Lecturer">
+              <select id="teacherDesig">
+                <option value="">Select Teacher Designation</option>
+                <option value="Professor">Professor</option>
+                <option value="Associate Professor">Associate Professor</option>
+                <option value="Assistant Professor">Assistant Professor</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="Assistant Faculty">Assistant Faculty</option>
+              </select>
             </div>
 
+            <!-- TEACHER DEPARTMENT -->
             <div class="field full">
               <label for="teacherDept">Teacher Department</label>
-              <input id="teacherDept" placeholder="e.g. Department of CSE, MIU">
+              <select id="teacherDept">
+                <option value="">Select Teacher Department</option>
+                <option value="Department of CSE">Department of CSE</option>
+                <option value="Department of EEE">Department of EEE</option>
+                <option value="Department of Pharmacy">Department of Pharmacy</option>
+                <option value="Department of English">Department of English</option>
+                <option value="Department of BJM">Department of BJM</option>
+                <option value="Department of BBA">Department of BBA</option>
+                <option value="Department of LLB">Department of LLB</option>
+                <option value="Department of Islamic Studies">Department of Islamic Studies</option>
+                <option value="Department of CGED">Department of CGED</option>
+              </select>
             </div>
+
           </div>
 
           <div class="form-actions">
@@ -780,7 +803,7 @@
               </div>
 
               <div class="dept-name">
-                DEPARTMENT OF <span id="p-dept">COMPUTER SCIENCE & ENGINEERING</span>
+                DEPARTMENT OF <span id="p-dept">COMPUTER SCIENCE AND ENGINEERING</span>
               </div>
 
               <div class="doc-type" id="p-doc-type">ASSIGNMENT-01</div>
